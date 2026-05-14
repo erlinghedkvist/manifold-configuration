@@ -27,10 +27,81 @@ import {DEFAULT_LAYOUTS_ID,
         USER_4_LAYOUTS_ID, 
         LAYOUTS_CONFIGS_NUM,
         clone,
-        get_default_md}   from './layoutslib/layouts_default';
+        get_default_md,
+        get_default_ppms}   from './layoutslib/layouts_default';
 
 // Optional import for specific Riot Games layouts (currently commented out in usage below)
 import {get_proviews_valorant} from './layoutslib/layouts_riot';
+
+type PpmValueConfiguration = number | number[];
+
+function get_ppm_value(value : PpmValueConfiguration, index : number)
+{
+   if(Array.isArray(value))
+   {
+      return value[index] ?? value[value.length - 1];
+   }
+
+   return value;
+}
+
+function build_ppms_from_parameters(existing_ppms : any,
+                                    ppm_meters : number,
+                                    ppm_channels : PpmValueConfiguration,
+                                    ppm_channels_offset : PpmValueConfiguration,
+                                    ppm_width : number,
+                                    ppm_width_max : number,
+                                    ppm_channel_min_width : number)
+{
+   if(ppm_meters == 0)
+   {
+      return null;
+   }
+
+   let ppms : any = get_default_ppms(ppm_meters);
+   if(existing_ppms != null)
+   {
+      ppms.alignment = existing_ppms.alignment;
+   }
+   ppms.width                  = ppm_width;
+   ppms.width_max              = ppm_width_max;
+   ppms.channel_min_width      = ppm_channel_min_width;
+
+   for(let i = 0; i < ppm_meters;i++)
+   {
+      ppms.cells[i].channels_offset = get_ppm_value(ppm_channels_offset,i);
+      ppms.cells[i].channels_num    = get_ppm_value(ppm_channels,i);
+   }
+
+   return ppms;
+}
+
+function configure_ppms(pip_configuration : any,
+                        ppm_meters_left : number,
+                        ppm_channels_left : PpmValueConfiguration,
+                        ppm_channels_offset_left : PpmValueConfiguration,
+                        ppm_meters_right : number,
+                        ppm_channels_right : PpmValueConfiguration,
+                        ppm_channels_offset_right : PpmValueConfiguration,
+                        ppm_width : number,
+                        ppm_width_max : number,
+                        ppm_channel_min_width : number)
+{
+   pip_configuration.ppms_left  = build_ppms_from_parameters(pip_configuration.ppms_left,
+                                                             ppm_meters_left,
+                                                             ppm_channels_left,
+                                                             ppm_channels_offset_left,
+                                                             ppm_width,
+                                                             ppm_width_max,
+                                                             ppm_channel_min_width);
+   pip_configuration.ppms_right = build_ppms_from_parameters(pip_configuration.ppms_right,
+                                                             ppm_meters_right,
+                                                             ppm_channels_right,
+                                                             ppm_channels_offset_right,
+                                                             ppm_width,
+                                                             ppm_width_max,
+                                                             ppm_channel_min_width);
+}
 
 
 function init_configuration()
@@ -72,7 +143,7 @@ function init_configuration()
       for(let i = 0; i < LAYOUTS_CONFIGS_NUM;i++)
       {
          parameters.pip_configurations[i].standard_layouts_enable                       = true;                                       
-         parameters.pip_configurations[i].layouts_enable                                = false;
+         parameters.pip_configurations[i].layouts_enable                                = true;
          parameters.pip_configurations[i].remote_layouts_enable                         = false;
          parameters.pip_configurations[i].director_layouts_enable                       = false;
          parameters.pip_configurations[i].vt_coord_layouts_enable                       = false;
@@ -117,7 +188,7 @@ function init_configuration()
       {       
          parameters.pip_configurations[DEFAULT_LAYOUTS_ID].enable                       = true;
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID].enable                   = false; // UMD below video
-         parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_ID].enable               = false; // UMD + Audio Meters outside
+         parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_ID].enable               = true; // UMD + Audio Meters outside
          
          // Disable Tally versions to save clutter if not needed
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_TALLY_ID].enable             = false;
@@ -125,7 +196,7 @@ function init_configuration()
          
          // Enable "Inside" styles (Overlay)
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_ID].enable                    = false; // UMD inside video
-         parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_ID].enable                = false; // UMD + Audio Meters inside
+         parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_ID].enable                = true; // UMD + Audio Meters inside
          
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_TALLY_ID].enable              = false;
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_TALLY_ID].enable          = false;
@@ -137,8 +208,135 @@ function init_configuration()
          parameters.pip_configurations[USER_3_LAYOUTS_ID].enable                        = false;
          parameters.pip_configurations[USER_4_LAYOUTS_ID].enable                        = false; // The custom one defined above is OFF here
       }
+
+      // 5. PPM audio meter channel mapping
+      //
+      // ppm_meters_left/right controls how many PPM widgets are generated on each
+      // side of every PIP. This is the argument passed to get_default_ppms().
+      //
+      // ppm_channels_left/right controls how many audio channels each PPM widget
+      // displays. ppm_channels_offset_left/right controls which channel each
+      // widget starts from.
+      //
+      // Use a single number when all widgets on that side should use the same
+      // value, e.g. ppm_meters_left = 2 and ppm_channels_left = 4 creates two
+      // left-side PPM widgets, each displaying 4 channels.
+      //
+      // Use arrays for per-widget control. For example:
+      //   ppm_meters_left          = 2;
+      //   ppm_channels_left        = [2,2];
+      //   ppm_channels_offset_left = [0,2];
+      //
+      // This creates two left-side PPM widgets:
+      //   widget 0: channels 0-1
+      //   widget 1: channels 2-3
+      //
+      // PPM width is adaptive:
+      //   ppm_width is the normal side width as a fraction of the PIP width.
+      //   ppm_width_max is the largest side width the adaptive sizing may use.
+      //   ppm_channel_min_width is the target minimum pixel width per audio channel.
+      //
+      // The generator keeps ppm_width for large PIPs, but increases up to
+      // ppm_width_max when dense layouts would otherwise make the meters too narrow.
+      {
+         // Choose one of:
+         //   'split_16ch'     : left shows channels 0-7, right shows channels 8-15.
+         //   'mirrored_8ch'   : left and right both show channels 0-7.
+         //   'quad_4ch_zero'  : two meters per side, each showing channels 0-3.
+         let ppm_preset = 'split_16ch';
+
+         let ppm_meters_left             = 1;
+         let ppm_channels_left           = 8;
+         let ppm_channels_offset_left    = 0;
+
+         let ppm_meters_right            = 1;
+         let ppm_channels_right          = 8;
+         let ppm_channels_offset_right   = 8;
+
+         switch(ppm_preset)
+         {
+            case 'split_16ch':
+            {
+               ppm_meters_left             = 1;
+               ppm_channels_left           = 8;
+               ppm_channels_offset_left    = 0;
+               ppm_meters_right            = 1;
+               ppm_channels_right          = 8;
+               ppm_channels_offset_right   = 8;
+               break;
+            }
+            case 'mirrored_8ch':
+            {
+               ppm_meters_left             = 1;
+               ppm_channels_left           = 8;
+               ppm_channels_offset_left    = 0;
+               ppm_meters_right            = 1;
+               ppm_channels_right          = 8;
+               ppm_channels_offset_right   = 0;
+               break;
+            }
+            case 'quad_4ch_zero':
+            {
+               ppm_meters_left             = 2;
+               ppm_channels_left           = 4;
+               ppm_channels_offset_left    = 0;
+               ppm_meters_right            = 2;
+               ppm_channels_right          = 4;
+               ppm_channels_offset_right   = 0;
+               break;
+            }
+         }
+
+         let ppm_width                   = 0.05;
+         let ppm_width_max               = 0.09;
+         let ppm_channel_min_width       = 4;
+
+         configure_ppms(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_ID],
+                        ppm_meters_left,
+                        ppm_channels_left,
+                        ppm_channels_offset_left,
+                        ppm_meters_right,
+                        ppm_channels_right,
+                        ppm_channels_offset_right,
+                        ppm_width,
+                        ppm_width_max,
+                        ppm_channel_min_width);
+
+         configure_ppms(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID],
+                        ppm_meters_left,
+                        ppm_channels_left,
+                        ppm_channels_offset_left,
+                        ppm_meters_right,
+                        ppm_channels_right,
+                        ppm_channels_offset_right,
+                        ppm_width,
+                        ppm_width_max,
+                        ppm_channel_min_width);
+
+         configure_ppms(parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_ID],
+                        ppm_meters_left,
+                        ppm_channels_left,
+                        ppm_channels_offset_left,
+                        ppm_meters_right,
+                        ppm_channels_right,
+                        ppm_channels_offset_right,
+                        ppm_width,
+                        ppm_width_max,
+                        ppm_channel_min_width);
+
+         configure_ppms(parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_TALLY_ID],
+                        ppm_meters_left,
+                        ppm_channels_left,
+                        ppm_channels_offset_left,
+                        ppm_meters_right,
+                        ppm_channels_right,
+                        ppm_channels_offset_right,
+                        ppm_width,
+                        ppm_width_max,
+                        ppm_channel_min_width);
+      }
       
-      // 5. Configure Rasters (Canvas Sizes)
+      // 6. Configure Rasters (Canvas Sizes)
       // Enables 1080p and UHD raster generation. 
       // RASTER_1920x1080_ID corresponds to index 1 in the config array.
       {
@@ -151,7 +349,7 @@ function init_configuration()
          parameters.raster_configurations[RASTER_3840x2160_ID].layout_style_bgnd_color  = 'black';
       }    
       
-      // 6. Execute Generation
+      // 7. Execute Generation
       // Calls the library function to convert the `parameters` object into an array of Layout Objects.
       let layouts                   = generate_all_layouts(parameters);
       
@@ -160,7 +358,7 @@ function init_configuration()
          get_proviews_valorant('https://stream.v4.controller.barracks.gg/...',0,layouts);
       }*/
 
-      // 7. Add generated layouts to the result
+      // 8. Add generated layouts to the result
       {      
          for(let i = 0; i < layouts.length;i++)
          {
@@ -203,12 +401,12 @@ function init_configuration()
                   name                                    : `head-${i}`,
                   
                   // Define how many NMOS and Ember+ inputs are exposed per Head
-                  video_inputs_max_num                    : 32,
-                  audio_inputs_max_num                    : 32*4,
-                  metadata_inputs_max_num                 : 0,
+                  video_inputs_max_num                    : 64,
+                  audio_inputs_max_num                    : 64*4,
+                  metadata_inputs_max_num                 : 1,
                   
                   // Define how many audio and metadata streams exist per video. 1 is normally for single 2110-30 16-channel audio streams. 2 would be when there are 2 x 2110-30 8-channel streams for each video
-                  audio_inputs_per_video_input_max_num    : 1,
+                  audio_inputs_per_video_input_max_num    : 4,
                   metadata_inputs_per_video_input_max_num : 1,
                   
                   display_mode                            : 'on',                                           

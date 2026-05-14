@@ -70,17 +70,15 @@ function generate_md(pip_id : any,md_geometry : any,md_parameters : any,layout :
 
 function generate_audio_sources(pip_id : any,as_geometry : any,as_parameters : any,layout : any,on_parent_id_index : number)
 {
-    // When more than one PPM cell is configured, split the available WIDTH evenly so
-    // meters sit side‑by‑side instead of overlapping. The last cell takes the remainder
-    // to absorb rounding.
+    // When more than one PPM cell is configured, split the available width evenly
+    // and leave any rounding remainder unused so every meter renders identically.
     const cells_num    = as_parameters.cells.length;
     const base_width   = Math.floor(as_geometry.width / cells_num);
     let current_x      = as_geometry.x;
 
     for(let  i = 0; i < cells_num; i++)
     {
-        const is_last        = (i === cells_num - 1);
-        const cell_width     = is_last ? (as_geometry.x + as_geometry.width - current_x) : base_width;
+        const cell_width     = base_width;
 
         let audio_source = {
             db_schema         : 'video',   
@@ -116,6 +114,36 @@ function generate_audio_sources(pip_id : any,as_geometry : any,as_parameters : a
     }
 }
 
+function get_ppms_channels_max(ppms_parameters : any)
+{
+    let channels_max = 0;
+    for(let i = 0; i < ppms_parameters.cells.length;i++)
+    {
+        channels_max = Math.max(channels_max,ppms_parameters.cells[i].channels_num);
+    }
+    return channels_max;
+}
+
+function get_ppms_width(ppms_parameters : any,pip_width : number)
+{
+    let width = Math.floor(ppms_parameters.width*pip_width);
+
+    if(ppms_parameters.channel_min_width != null)
+    {
+        // Dense layouts can make a fixed percentage width too narrow for
+        // multi-channel meters. Grow the side width only as needed, then cap it
+        // so PPMs do not consume too much of the PIP.
+        const meters_num       = ppms_parameters.cells.length;
+        const channels_max     = get_ppms_channels_max(ppms_parameters);
+        const min_width        = meters_num*channels_max*ppms_parameters.channel_min_width;
+        const max_width        = Math.floor((ppms_parameters.width_max ?? ppms_parameters.width)*pip_width);
+
+        width = Math.min(Math.max(width,min_width),max_width);
+    }
+
+    return width;
+}
+
 
 function generate_pip(pip_id : any,pip_geometry : any ,parameters : any,layout : any)
 {
@@ -133,8 +161,8 @@ function generate_pip(pip_id : any,pip_geometry : any ,parameters : any,layout :
     let pip_height              = Math.floor(pip_geometry.height - 2*parameters.pip_edge_gap_y_size);
     let umd_height              = (parameters.pip_configuration.umd != null) ? Math.floor(parameters.pip_configuration.umd.height*pip_height) : 0;    
     let omd_height              = (parameters.pip_configuration.omd != null) ? Math.floor(parameters.pip_configuration.omd.height*pip_height) : 0;
-    let ppms_left_width         = (parameters.pip_configuration.ppms_left != null) ? Math.floor(parameters.pip_configuration.ppms_left.width*pip_width) : 0;    
-    let ppms_right_width        = (parameters.pip_configuration.ppms_right != null) ? Math.floor(parameters.pip_configuration.ppms_right.width*pip_width) : 0;
+    let ppms_left_width         = (parameters.pip_configuration.ppms_left != null) ? get_ppms_width(parameters.pip_configuration.ppms_left,pip_width) : 0;    
+    let ppms_right_width        = (parameters.pip_configuration.ppms_right != null) ? get_ppms_width(parameters.pip_configuration.ppms_right,pip_width) : 0;
     let video_source_x          = Math.floor(pip_geometry.x) + parameters.pip_edge_gap_x_size;
     let video_source_y          = Math.floor(pip_geometry.y) + parameters.pip_edge_gap_y_size;
     let video_source_height     = pip_height;
@@ -1476,6 +1504,8 @@ export function get_default_ppms(cells_num : any)
     {        
         alignment            : 'outside',        
         width                : 0.05,
+        width_max            : null,
+        channel_min_width    : null,
         cells                : []
     };
     for(let i = 0; i < cells_num;i++)
@@ -1687,7 +1717,7 @@ export function generate_layouts_parameters()
             }            
             {                
                 parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].ppms_right                                                    = get_default_ppms(1);
-                parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].ppms_left.alignment                                           = 'outside';                                                  
+                parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].ppms_right.alignment                                           = 'outside';                                                  
                 parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].ppms_right.cells[0].channels_offset                           = 2;
                 parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].ppms_right.cells[0].channels_num                              = 2;
             }
