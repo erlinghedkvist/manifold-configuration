@@ -1,0 +1,14 @@
+.env
+.codex/
+.agents/
+.git-local/
+
+# Editor and backup files
+*~
+*.bak
+*.save
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
