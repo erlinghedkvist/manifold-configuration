@@ -34,6 +34,7 @@ import {DEFAULT_LAYOUTS_ID,
 import {get_proviews_valorant} from './layoutslib/layouts_riot';
 
 type PpmValueConfiguration = number | number[];
+type PpmPreset = 'split_16ch' | 'mirrored_8ch' | 'quad_4ch_zero';
 
 function get_ppm_value(value : PpmValueConfiguration, index : number)
 {
@@ -43,6 +44,68 @@ function get_ppm_value(value : PpmValueConfiguration, index : number)
    }
 
    return value;
+}
+
+function validate_ppm_parameters(ppm_meters : number,
+                                 ppm_channels : PpmValueConfiguration,
+                                 ppm_channels_offset : PpmValueConfiguration,
+                                 ppm_width : number,
+                                 ppm_width_max : number,
+                                 ppm_channel_min_width : number,
+                                 side_name : string)
+{
+   if(ppm_meters < 0)
+   {
+      throw new Error(`${side_name}: ppm_meters must be 0 or greater`);
+   }
+   if(ppm_width <= 0)
+   {
+      throw new Error(`${side_name}: ppm_width must be greater than 0`);
+   }
+   if(ppm_width_max < ppm_width)
+   {
+      throw new Error(`${side_name}: ppm_width_max must be greater than or equal to ppm_width`);
+   }
+   if(ppm_channel_min_width <= 0)
+   {
+      throw new Error(`${side_name}: ppm_channel_min_width must be greater than 0`);
+   }
+   if(Array.isArray(ppm_channels) && ppm_channels.length == 0)
+   {
+      throw new Error(`${side_name}: ppm_channels array must not be empty`);
+   }
+   if(Array.isArray(ppm_channels_offset) && ppm_channels_offset.length == 0)
+   {
+      throw new Error(`${side_name}: ppm_channels_offset array must not be empty`);
+   }
+
+   for(let i = 0; i < ppm_meters;i++)
+   {
+      if(get_ppm_value(ppm_channels,i) <= 0)
+      {
+         throw new Error(`${side_name}: ppm_channels must be greater than 0`);
+      }
+      if(get_ppm_value(ppm_channels_offset,i) < 0)
+      {
+         throw new Error(`${side_name}: ppm_channels_offset must be 0 or greater`);
+      }
+   }
+}
+
+function copy_ppm_cell_style(target_cell : any, source_cell : any)
+{
+   if(source_cell == null)
+   {
+      return;
+   }
+
+   for(let key of Object.keys(source_cell))
+   {
+      if((key != 'channels_offset') && (key != 'channels_num'))
+      {
+         target_cell[key] = source_cell[key];
+      }
+   }
 }
 
 function build_ppms_from_parameters(existing_ppms : any,
@@ -69,6 +132,12 @@ function build_ppms_from_parameters(existing_ppms : any,
 
    for(let i = 0; i < ppm_meters;i++)
    {
+      if(existing_ppms != null)
+      {
+         // Preserve visual tuning from the source style while replacing only the
+         // channel mapping requested by cluster.ts.
+         copy_ppm_cell_style(ppms.cells[i],existing_ppms.cells[Math.min(i,existing_ppms.cells.length - 1)]);
+      }
       ppms.cells[i].channels_offset = get_ppm_value(ppm_channels_offset,i);
       ppms.cells[i].channels_num    = get_ppm_value(ppm_channels,i);
    }
@@ -87,6 +156,9 @@ function configure_ppms(pip_configuration : any,
                         ppm_width_max : number,
                         ppm_channel_min_width : number)
 {
+   validate_ppm_parameters(ppm_meters_left,ppm_channels_left,ppm_channels_offset_left,ppm_width,ppm_width_max,ppm_channel_min_width,'PPM left');
+   validate_ppm_parameters(ppm_meters_right,ppm_channels_right,ppm_channels_offset_right,ppm_width,ppm_width_max,ppm_channel_min_width,'PPM right');
+
    pip_configuration.ppms_left  = build_ppms_from_parameters(pip_configuration.ppms_left,
                                                              ppm_meters_left,
                                                              ppm_channels_left,
@@ -139,7 +211,15 @@ function init_configuration()
       
       // 2. Global Enable/Disable:
       // Loop through all available configuration slots (LAYOUTS_CONFIGS_NUM = 14).
-      // By default, enable standard layouts (grids) and disable complex ones (remote/director).
+      //
+      // standard_layouts_enable generates the regular grid families:
+      // 1-way, 4-way, 9-way, 12-way, 16-way, 25-way, etc.
+      //
+      // layouts_enable generates the asymmetric/featured layouts:
+      // 6-way, 7-way, 8-way, 10-way, 13-way variants.
+      //
+      // remote/director/vt_coord are specialized layout families and are disabled
+      // here unless explicitly needed.
       for(let i = 0; i < LAYOUTS_CONFIGS_NUM;i++)
       {
          parameters.pip_configurations[i].standard_layouts_enable                       = true;                                       
@@ -243,7 +323,7 @@ function init_configuration()
          //   'split_16ch'     : left shows channels 0-7, right shows channels 8-15.
          //   'mirrored_8ch'   : left and right both show channels 0-7.
          //   'quad_4ch_zero'  : two meters per side, each showing channels 0-3.
-         let ppm_preset = 'split_16ch';
+         let ppm_preset : PpmPreset = 'split_16ch';
 
          let ppm_meters_left             = 1;
          let ppm_channels_left           = 8;
@@ -253,7 +333,7 @@ function init_configuration()
          let ppm_channels_right          = 8;
          let ppm_channels_offset_right   = 8;
 
-         switch(ppm_preset)
+         switch(ppm_preset as string)
          {
             case 'split_16ch':
             {
@@ -284,6 +364,10 @@ function init_configuration()
                ppm_channels_right          = 4;
                ppm_channels_offset_right   = 0;
                break;
+            }
+            default:
+            {
+               throw new Error(`Unknown PPM preset: ${ppm_preset}`);
             }
          }
 
