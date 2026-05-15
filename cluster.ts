@@ -101,7 +101,9 @@ function copy_ppm_cell_style(target_cell : any, source_cell : any)
 
    for(let key of Object.keys(source_cell))
    {
-      if((key != 'channels_offset') && (key != 'channels_num'))
+      // Keep cluster.ts in charge of channel mapping and visibility. Some legacy
+      // inside PPM styles use style_opacity=0, which hides the rebuilt widgets.
+      if((key != 'channels_offset') && (key != 'channels_num') && (key != 'style_opacity'))
       {
          target_cell[key] = source_cell[key];
       }
