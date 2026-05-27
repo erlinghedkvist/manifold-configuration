@@ -34,6 +34,7 @@ import {DEFAULT_LAYOUTS_ID,
 import {get_proviews_valorant} from './layoutslib/layouts_riot';
 
 type PpmValueConfiguration = number | number[];
+type PpmConfigurationMode = 'preset' | 'manual';
 type PpmPreset = 'split_16ch' | 'mirrored_8ch' | 'quad_4ch_zero';
 
 function get_ppm_value(value : PpmValueConfiguration, index : number)
@@ -187,7 +188,7 @@ function init_configuration()
    let result = 
    {
       cluster :{
-         name : "manifold Cluster 1" 
+         name : "Manifold Cluster 1" 
       },
       cluster_configuration : {
          name         : "Configuration 1", 
@@ -321,12 +322,20 @@ function init_configuration()
       // The generator keeps ppm_width for large PIPs, but increases up to
       // ppm_width_max when dense layouts would otherwise make the meters too narrow.
       {
-         // Choose one of:
+         // Choose how PPM channel mapping is configured:
+         //   'preset' : use one of the named presets below.
+         //   'manual' : ignore ppm_preset and use the individual values below.
+         let ppm_configuration_mode : PpmConfigurationMode = 'preset';
+
+         // Used only when ppm_configuration_mode is 'preset'.
          //   'split_16ch'     : left shows channels 0-7, right shows channels 8-15.
          //   'mirrored_8ch'   : left and right both show channels 0-7.
          //   'quad_4ch_zero'  : two meters per side, each showing channels 0-3.
-         let ppm_preset : PpmPreset = 'split_16ch';
+         let ppm_preset             : PpmPreset            = 'quad_4ch_zero';
 
+         // Used only when ppm_configuration_mode is 'manual'.
+         // These may be numbers or arrays. Arrays allow each PPM widget on a side
+         // to use a different channel count or start offset.
          let ppm_meters_left             = 1;
          let ppm_channels_left           = 8;
          let ppm_channels_offset_left    = 0;
@@ -335,41 +344,44 @@ function init_configuration()
          let ppm_channels_right          = 8;
          let ppm_channels_offset_right   = 8;
 
-         switch(ppm_preset as string)
+         if(ppm_configuration_mode == 'preset')
          {
-            case 'split_16ch':
+            switch(ppm_preset as string)
             {
-               ppm_meters_left             = 1;
-               ppm_channels_left           = 8;
-               ppm_channels_offset_left    = 0;
-               ppm_meters_right            = 1;
-               ppm_channels_right          = 8;
-               ppm_channels_offset_right   = 8;
-               break;
-            }
-            case 'mirrored_8ch':
-            {
-               ppm_meters_left             = 1;
-               ppm_channels_left           = 8;
-               ppm_channels_offset_left    = 0;
-               ppm_meters_right            = 1;
-               ppm_channels_right          = 8;
-               ppm_channels_offset_right   = 0;
-               break;
-            }
-            case 'quad_4ch_zero':
-            {
-               ppm_meters_left             = 2;
-               ppm_channels_left           = 4;
-               ppm_channels_offset_left    = 0;
-               ppm_meters_right            = 2;
-               ppm_channels_right          = 4;
-               ppm_channels_offset_right   = 0;
-               break;
-            }
-            default:
-            {
-               throw new Error(`Unknown PPM preset: ${ppm_preset}`);
+               case 'split_16ch':
+               {
+                  ppm_meters_left             = 1;
+                  ppm_channels_left           = 8;
+                  ppm_channels_offset_left    = 0;
+                  ppm_meters_right            = 1;
+                  ppm_channels_right          = 8;
+                  ppm_channels_offset_right   = 8;
+                  break;
+               }
+               case 'mirrored_8ch':
+               {
+                  ppm_meters_left             = 1;
+                  ppm_channels_left           = 8;
+                  ppm_channels_offset_left    = 0;
+                  ppm_meters_right            = 1;
+                  ppm_channels_right          = 8;
+                  ppm_channels_offset_right   = 0;
+                  break;
+               }
+               case 'quad_4ch_zero':
+               {
+                  ppm_meters_left             = 2;
+                  ppm_channels_left           = 4;
+                  ppm_channels_offset_left    = 0;
+                  ppm_meters_right            = 2;
+                  ppm_channels_right          = 4;
+                  ppm_channels_offset_right   = 0;
+                  break;
+               }
+               default:
+               {
+                  throw new Error(`Unknown PPM preset: ${ppm_preset}`);
+               }
             }
          }
 
@@ -431,7 +443,7 @@ function init_configuration()
       }
       // 3840x2160 raster
       {
-         parameters.raster_configurations[RASTER_3840x2160_ID].enable                   = false;
+         parameters.raster_configurations[RASTER_3840x2160_ID].enable                   = true;
          parameters.raster_configurations[RASTER_3840x2160_ID].layout_style_bgnd_color  = 'black';
       }    
       
@@ -462,44 +474,45 @@ function init_configuration()
    let heads_description = [
       
       // FHD Heads
-      {id : 0,  name : 'MV 1',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p50Hz',layout_id : 37,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 1,  name : 'MV 2',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p50Hz',layout_id : 37,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 2,  name : 'MV 3',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p50Hz',layout_id : 37,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 3,  name : 'MV 4',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p50Hz',layout_id : 37,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 4,  name : 'MV 5',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p50Hz',layout_id : 37,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 5,  name : 'MV 6',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p50Hz',layout_id : 37,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      {id : 0,  name : 'MANIFOLD MV 1',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      {id : 1,  name : 'MANIFOLD MV 2',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      {id : 2,  name : 'MANIFOLD MV 3',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      {id : 3,  name : 'MANIFOLD MV 4',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      //{id : 4,  name : 'MANIFOLD MV 5',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      //{id : 5,  name : 'MANIFOLD MV 6',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
       
       // UHD Heads
-      {id : 6,  name : 'UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p50Hz',layout_id : 197,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 7,  name : 'UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p50Hz',layout_id : 197,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      //{id : 6,  name : 'MANIFOLD UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      //{id : 7,  name : 'MANIFOLD UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
    ];
 
    // Generate DB records for Heads
+
    {    
-      for(let i = 0; i < 4;i++)
+      for(let i = 0; i < heads_description.length;i++)
       {               
+                                    	   
          let head = {
             db_schema         : 'video',   
             db_table          : 'multiviewer_heads',         
             db_table_records   : [
                {                 
-                  //user_afu_id                             : heads_description[i].user_afu_id, //commented out for auto load balance                  
-                  name                                    : `head-${i}`,
-                  
-                  // Define how many NMOS and Ember+ inputs are exposed per Head
-                  video_inputs_max_num                    : 64,
-                  audio_inputs_max_num                    : 64*4,
-                  metadata_inputs_max_num                 : 1,
-                  
-                  // Define how many audio and metadata streams exist per video. 1 is normally for single 2110-30 16-channel audio streams. 2 would be when there are 2 x 2110-30 8-channel streams for each video
+                  //user_afu_id                             : heads_description[i].user_afu_id, //Use this to pin a head to an AFU. Reversely, comment out for auto load balance                  
+                  name                                    : heads_description[i].name,//`Head ${i}`,
+                  video_inputs_max_num                    : heads_description[i].video_inputs_max_num,
+                  audio_inputs_max_num                    : heads_description[i].audio_inputs_max_num,
+                  metadata_inputs_max_num                 : heads_description[i].metadata_inputs_max_num,
+
+                  // Define how many audio and metadata streams exist per video. 1 is normally for single 2110-30 16-channel audio streams. 
+                  // 2 would be when there are 2 x 2110-30 8-channel streams for each video
                   audio_inputs_per_video_input_max_num    : 4,
                   metadata_inputs_per_video_input_max_num : 1,
-                  
+
                   display_mode                            : 'on',                                           
-                  video_raster_id                         : '1920x1080',
-                  video_refresh_rate_id                   : 'p50Hz',
-                  layout_id                               : 1,
-                  ip_addresses_range_id                   : 10, // Maps to 'Multiviewer Heads IP Range' in cloud.ts
+                  video_raster_id                         : heads_description[i].video_raster_id,
+                  video_refresh_rate_id                   : heads_description[i].video_refresh_rate_id,                                
+                  layout_id                               : heads_description[i].layout_id,                                                
+                  ip_addresses_range_id                   : 10, // Maps to 'Multiviewer Heads IP Range' in cloud.t
                   video_tcs                               : 'SDR' //Options are : ('SDR','HLG','PQ','LINEAR')
                }
             ]
