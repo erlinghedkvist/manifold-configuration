@@ -9,6 +9,7 @@
 //  - Cluster defaults (PTP, control protocols, NMOS, routing modes, etc.)
 // -----------------------------------------------------------------------------
 
+
 export let manifold_cloud_configuration = [
 
   // ===========================================================================
@@ -116,7 +117,7 @@ export let manifold_cloud_configuration = [
       {
         // Placeholder key; replace with your actual license metadata
         "name"  : "license key 1",
-        "token":"eyJhbGciOiJQUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDM2NTQyMDEsImlhdCI6MTc3MjA5NzI0OSwibWFuaWZvbGQtY2xvdWQtY2hpcC1pZHMiOiJbXCIweDg3NDMzMDQwRjU2NTdDQTBcIl0iLCJtYW5pZm9sZC1jbG91ZC1wb2ludHMiOiI0MDAwIiwibWFuaWZvbGQtY2xvdWQtc3lzdGVtLWlkcyI6IltcIjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLWNjODI3ZjQ3MGI4YlwiXSIsIm1hbmlmb2xkLWNsb3VkLXVwZGF0ZXMtZW5hYmxlIjoidHJ1ZSJ9.nFvnfXKOFatIazLR2oBb6sSo0HTbAqGfsvNP9AuBNsjF3R6OEnXpZPRUYXaFCdpOAUdtxy9qpCOP677yvRT2wte5WbrvcWGNvwaCr6D4Q418B03lOX5M1Z1ObmFR4-aQPlSavgmGyMewsFWLgLPpJanJlSASgUC0qRTkFH2DyqMqfj2WSGuc9o_Vni3jA5tpkX6VvTzuw21x64HEkSv4aBywjzMSG9yuq1Zxy7oevAi41rtanoK8xL66M86PS6H3C_naTolfSIxbaUmHhPJ0No0ATVUqR2BBHUnlu1VbcECriRwupyn8azcbrjD9RhKvG0PxTzq_vhP_gk6F8n9GWeBjjQdZ_FqzVkv9ajnPgVYweyR9Ix4INPKFX4jGi7qfMQ_LmXlzokJWHOfHMCvTNY4pbAeygD-OLkUpnhjLyrXGL72IFSEp2PDOQViM54zrFoEcyRCa0mspYpKyt30FADZRzZ0B4MP1kZBU67DoLQ0WmdIrGtmaNSf57Gf4wJLEKoylfCrCHXgTRmvDZMYj13Q_KD2YNRec5L9EpWs1ZuVKfzKqNkcBZRenJ1s35s0KmVdGKaoin3CtEDeHMZOXwQ0k3RK84y09ePoEqRkrJDlN34mgm73lafoImS3m4d4Sl3YAkg4q9cVM_LxccPNx3juP_zzfLmqxnp7NVcICJDo"
+        "token": ""
       }
     ]
   },
@@ -187,7 +188,7 @@ export let manifold_cloud_configuration = [
     "db_table_data": [
       {
         // Human-friendly cluster name
-        "name": "manifold Cluster 1",
+        "name": "Manifold Cluster 1",
 
         // Optional manual UUID for deterministic identity.
         // If not provided, one is auto-generated at cluster creation.
@@ -273,9 +274,9 @@ export let manifold_cloud_configuration = [
         // NMOS registry/advertising
         // --------------------------
         // IS-04/IS-05 registry URL for resource discovery and connection
-        "nmos_registry_url": "http://172.16.0.53:30010",
-        // Hosts/IPs to advertise as senders/receivers in registry
-        "nmos_advertised_hosts": ["172.16.0.120"]
+        "nmos_registry_url": "http://0.0.0.0:30010",
+        // Hosts/IPs to advertise as senders/receivers in registry. This is normally the mgmt IP of the server
+        "nmos_advertised_hosts": ["0.0.0.0"]
       }
     ]
   },

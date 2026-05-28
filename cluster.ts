@@ -1,182 +1,40 @@
 // -----------------------------------------------------------------------------
 // IMPORTS
 // -----------------------------------------------------------------------------
-// These functions are imported from the library file 'layouts_default.ts'.
-// They are responsible for creating the default data structures and generating
-// the actual database records for the layouts.
-import {generate_layouts_parameters,generate_all_layouts}                                                                  from './layoutslib/layouts_default';
-import {RASTER_1280x720_ID,RASTER_1920x1080_ID,RASTER_3840x2160_ID}                                                        from './layoutslib/layouts_default';
-
-// Import Layout Configuration IDs (Indices)
-// These constants (like OUTSIDE_LAYOUTS_UMD_ID) are simple integers defined in 
-// layouts_default.ts  that allow us to target specific "Styles" of layouts 
-// (e.g., styles with UMDs outside the video, inside the video, with Tally, etc.).
-import {DEFAULT_LAYOUTS_ID,
-        OUTSIDE_LAYOUTS_UMD_ID,
-        OUTSIDE_LAYOUTS_UMD_PPM_ID,       
-        OUTSIDE_LAYOUTS_UMD_TALLY_ID,     
-        OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
-        INSIDE_LAYOUTS_UMD_ID,
-        INSIDE_LAYOUTS_UMD_PPM_ID,
-        INSIDE_LAYOUTS_UMD_TALLY_ID,
-        INSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
-        USER_0_LAYOUTS_ID,
-        USER_1_LAYOUTS_ID,
-        USER_2_LAYOUTS_ID, 
-        USER_3_LAYOUTS_ID, 
-        USER_4_LAYOUTS_ID, 
-        LAYOUTS_CONFIGS_NUM,
-        clone,
-        get_default_md,
-        get_default_ppms}   from './layoutslib/layouts_default';
+// These functions and constants are imported from the library file
+// 'layouts_default.ts'. They create the default layout data structures and
+// generate the actual database records for the layouts.
+import {
+   DEFAULT_LAYOUTS_ID,
+   INSIDE_LAYOUTS_UMD_ID,
+   INSIDE_LAYOUTS_UMD_PPM_ID,
+   INSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
+   INSIDE_LAYOUTS_UMD_TALLY_ID,
+   LAYOUTS_CONFIGS_NUM,
+   OUTSIDE_LAYOUTS_UMD_ID,
+   OUTSIDE_LAYOUTS_UMD_PPM_ID,
+   OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
+   OUTSIDE_LAYOUTS_UMD_TALLY_ID,
+   RASTER_1280x720_ID,
+   RASTER_1920x1080_ID,
+   RASTER_3840x2160_ID,
+   USER_0_LAYOUTS_ID,
+   USER_1_LAYOUTS_ID,
+   USER_2_LAYOUTS_ID,
+   USER_3_LAYOUTS_ID,
+   USER_4_LAYOUTS_ID,
+   clone,
+   configure_default_ppm_layouts,
+   configure_existing_omd_modes,
+   configure_existing_umd_modes,
+   generate_all_layouts,
+   generate_layouts_parameters,
+   get_default_md
+} from './layoutslib/layouts_default';
+import type {MonitorDisplayMode} from './layoutslib/layouts_default';
 
 // Optional import for specific Riot Games layouts (currently commented out in usage below)
 import {get_proviews_valorant} from './layoutslib/layouts_riot';
-
-type PpmValueConfiguration = number | number[];
-type PpmConfigurationMode = 'preset' | 'manual';
-type PpmPreset = 'split_16ch' | 'mirrored_8ch' | 'quad_4ch_zero';
-
-function get_ppm_value(value : PpmValueConfiguration, index : number)
-{
-   if(Array.isArray(value))
-   {
-      return value[index] ?? value[value.length - 1];
-   }
-
-   return value;
-}
-
-function validate_ppm_parameters(ppm_meters : number,
-                                 ppm_channels : PpmValueConfiguration,
-                                 ppm_channels_offset : PpmValueConfiguration,
-                                 ppm_width : number,
-                                 ppm_width_max : number,
-                                 ppm_channel_min_width : number,
-                                 side_name : string)
-{
-   if(ppm_meters < 0)
-   {
-      throw new Error(`${side_name}: ppm_meters must be 0 or greater`);
-   }
-   if(ppm_width <= 0)
-   {
-      throw new Error(`${side_name}: ppm_width must be greater than 0`);
-   }
-   if(ppm_width_max < ppm_width)
-   {
-      throw new Error(`${side_name}: ppm_width_max must be greater than or equal to ppm_width`);
-   }
-   if(ppm_channel_min_width <= 0)
-   {
-      throw new Error(`${side_name}: ppm_channel_min_width must be greater than 0`);
-   }
-   if(Array.isArray(ppm_channels) && ppm_channels.length == 0)
-   {
-      throw new Error(`${side_name}: ppm_channels array must not be empty`);
-   }
-   if(Array.isArray(ppm_channels_offset) && ppm_channels_offset.length == 0)
-   {
-      throw new Error(`${side_name}: ppm_channels_offset array must not be empty`);
-   }
-
-   for(let i = 0; i < ppm_meters;i++)
-   {
-      if(get_ppm_value(ppm_channels,i) <= 0)
-      {
-         throw new Error(`${side_name}: ppm_channels must be greater than 0`);
-      }
-      if(get_ppm_value(ppm_channels_offset,i) < 0)
-      {
-         throw new Error(`${side_name}: ppm_channels_offset must be 0 or greater`);
-      }
-   }
-}
-
-function copy_ppm_cell_style(target_cell : any, source_cell : any)
-{
-   if(source_cell == null)
-   {
-      return;
-   }
-
-   for(let key of Object.keys(source_cell))
-   {
-      // Keep cluster.ts in charge of channel mapping and visibility. Some legacy
-      // inside PPM styles use style_opacity=0, which hides the rebuilt widgets.
-      if((key != 'channels_offset') && (key != 'channels_num') && (key != 'style_opacity'))
-      {
-         target_cell[key] = source_cell[key];
-      }
-   }
-}
-
-function build_ppms_from_parameters(existing_ppms : any,
-                                    ppm_meters : number,
-                                    ppm_channels : PpmValueConfiguration,
-                                    ppm_channels_offset : PpmValueConfiguration,
-                                    ppm_width : number,
-                                    ppm_width_max : number,
-                                    ppm_channel_min_width : number)
-{
-   if(ppm_meters == 0)
-   {
-      return null;
-   }
-
-   let ppms : any = get_default_ppms(ppm_meters);
-   if(existing_ppms != null)
-   {
-      ppms.alignment = existing_ppms.alignment;
-   }
-   ppms.width                  = ppm_width;
-   ppms.width_max              = ppm_width_max;
-   ppms.channel_min_width      = ppm_channel_min_width;
-
-   for(let i = 0; i < ppm_meters;i++)
-   {
-      if(existing_ppms != null)
-      {
-         // Preserve visual tuning from the source style while replacing only the
-         // channel mapping requested by cluster.ts.
-         copy_ppm_cell_style(ppms.cells[i],existing_ppms.cells[Math.min(i,existing_ppms.cells.length - 1)]);
-      }
-      ppms.cells[i].channels_offset = get_ppm_value(ppm_channels_offset,i);
-      ppms.cells[i].channels_num    = get_ppm_value(ppm_channels,i);
-   }
-
-   return ppms;
-}
-
-function configure_ppms(pip_configuration : any,
-                        ppm_meters_left : number,
-                        ppm_channels_left : PpmValueConfiguration,
-                        ppm_channels_offset_left : PpmValueConfiguration,
-                        ppm_meters_right : number,
-                        ppm_channels_right : PpmValueConfiguration,
-                        ppm_channels_offset_right : PpmValueConfiguration,
-                        ppm_width : number,
-                        ppm_width_max : number,
-                        ppm_channel_min_width : number)
-{
-   validate_ppm_parameters(ppm_meters_left,ppm_channels_left,ppm_channels_offset_left,ppm_width,ppm_width_max,ppm_channel_min_width,'PPM left');
-   validate_ppm_parameters(ppm_meters_right,ppm_channels_right,ppm_channels_offset_right,ppm_width,ppm_width_max,ppm_channel_min_width,'PPM right');
-
-   pip_configuration.ppms_left  = build_ppms_from_parameters(pip_configuration.ppms_left,
-                                                             ppm_meters_left,
-                                                             ppm_channels_left,
-                                                             ppm_channels_offset_left,
-                                                             ppm_width,
-                                                             ppm_width_max,
-                                                             ppm_channel_min_width);
-   pip_configuration.ppms_right = build_ppms_from_parameters(pip_configuration.ppms_right,
-                                                             ppm_meters_right,
-                                                             ppm_channels_right,
-                                                             ppm_channels_offset_right,
-                                                             ppm_width,
-                                                             ppm_width_max,
-                                                             ppm_channel_min_width);
-}
 
 
 function init_configuration()
@@ -232,40 +90,65 @@ function init_configuration()
          parameters.pip_configurations[i].vt_coord_layouts_enable                       = false;
       }
 
-       // 3. Custom Layout Definition (Example: USER_4)
-       // This block demonstrates how to create a custom "Look" for a layout family.
-       // We take a blank slot (USER_4_LAYOUTS_ID) and configure it.
+
+
+      // 3. UMD/OMD text source mapping
+      // These modes control what each monitor-display cell shows.
+      // Use one entry for one-cell UMDs/OMDs. For multi-cell displays, add one
+      // mode per cell, e.g. ['parent_video_source_standard','parent_video_source_name'].
+      // If a display has more cells than entries, the last entry is reused.
+      // Options:
+      //   'label'
+      //   'parent_video_source_name'
+      //   'parent_video_source_standard'
+      //   'parent_video_source_tally_label'
+      //   'parent_video_source_user_label_0'
+      //   'parent_video_source_user_label_1'
+      //   'parent_video_source_standard_interface'
+      //   'parent_video_source_standard_tcs'
+      {
+         let default_umd_modes : MonitorDisplayMode[] = ['parent_video_source_tally_label'];
+         let default_omd_modes : MonitorDisplayMode[] = ['parent_video_source_standard_interface'];
+
+         configure_existing_umd_modes(parameters,default_umd_modes);
+         configure_existing_omd_modes(parameters,default_omd_modes);
+      }
+
+      // 4. Custom Layout Definition (Example: USER_0)
+      // This block demonstrates how to create a custom "Look" for a layout family.
+      // We take a blank slot (USER_0_LAYOUTS_ID) and configure it.
        {
          // Start by cloning an existing style (UMD Outside) to inherit defaults.
-         parameters.pip_configurations[USER_4_LAYOUTS_ID]                                    = clone(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID]);
+         parameters.pip_configurations[USER_0_LAYOUTS_ID]                                    = clone(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID]);
          
          // Name this style 'outside (umd dual)' so it appears distinct in the UI.
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].name                               = 'outside (umd dual)';
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].name                               = 'outside (umd dual)';
          
          // Remove the video border (2*0 = 0px width).
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].video_source.style_border_width    = 2*0;
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].video_source.style_border_width    = 2*0;
          
          // Define the UMD (Under Monitor Display) bar:
          // get_default_md(2) creates a UMD with 2 cells.
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd                                = get_default_md(2);
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.alignment                      = 'outside'; // Place UMD below video 
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.width                          = 1.0;       // UMD matches PIP width
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd                                = get_default_md(2);
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.alignment                      = 'outside'; // Place UMD below video 
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.width                          = 1.0;       // UMD matches PIP width
          
          // Configure Cell 0 (Left side of UMD):
          // 'parent_video_source_standard' usually links to the logical source name.
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.cells[0].mode                  = 'parent_video_source_standard',
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.cells[0].width                 = 0.4; // Takes 40% width                     
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.cells[0].style_border_width    = 1;
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].mode                  = 'parent_video_source_standard',
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].width                 = 0.4; // Takes 40% width                     
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].style_border_width    = 1;
          
          // Configure Cell 1 (Right side of UMD):
          // 'parent_video_source_name' links to the video source name alias.
          /* Options include: 'parent_video_source_tally_label', 'parent_video_source_user_label_0', etc. */
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.cells[1].mode                  = 'parent_video_source_name', 
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.cells[1].width                 = 0.6; // Takes 60% width          
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].umd.cells[1].style_border_width    = 1;  
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].mode                  = 'parent_video_source_name', 
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].width                 = 0.6; // Takes 60% width          
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].style_border_width    = 1;  
       }
 
-      // 4. Toggle specific styles ON or OFF
+
+      // 5. Toggle specific styles ON or OFF
       // This section determines which Layout Families are actually generated.
       // Setting .enable = false prevents the system from generating hundreds of unused layouts.
       {       
@@ -273,9 +156,9 @@ function init_configuration()
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID].enable                   = false; // UMD below video
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_ID].enable               = true; // UMD + Audio Meters outside
          
-         // Disable Tally versions to save clutter if not needed
+         // Tally style selection
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_TALLY_ID].enable             = false;
-         parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].enable         = false;
+         parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].enable         = true;
          
          // Enable "Inside" styles (Overlay)
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_ID].enable                    = false; // UMD inside video
@@ -285,14 +168,15 @@ function init_configuration()
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_TALLY_ID].enable          = false;
          
          // Disable User Custom slots by default
-         parameters.pip_configurations[USER_0_LAYOUTS_ID].enable                        = false;
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].enable                        = false; // The custom one defined above is OFF here
          parameters.pip_configurations[USER_1_LAYOUTS_ID].enable                        = false;
          parameters.pip_configurations[USER_2_LAYOUTS_ID].enable                        = false;
          parameters.pip_configurations[USER_3_LAYOUTS_ID].enable                        = false;
-         parameters.pip_configurations[USER_4_LAYOUTS_ID].enable                        = false; // The custom one defined above is OFF here
+         parameters.pip_configurations[USER_4_LAYOUTS_ID].enable                        = false
       }
 
-      // 5. PPM audio meter channel mapping
+
+      // 6. PPM audio meter channel mapping
       //
       // ppm_meters_left/right controls how many PPM widgets are generated on each
       // side of every PIP. This is the argument passed to get_default_ppms().
@@ -322,6 +206,9 @@ function init_configuration()
       // The generator keeps ppm_width for large PIPs, but increases up to
       // ppm_width_max when dense layouts would otherwise make the meters too narrow.
       {
+         type PpmConfigurationMode = 'preset' | 'manual';
+         type PpmPreset = 'split_16ch' | 'mirrored_8ch' | 'quad_4ch_zero';
+
          // Choose how PPM channel mapping is configured:
          //   'preset' : use one of the named presets below.
          //   'manual' : ignore ppm_preset and use the individual values below.
@@ -331,7 +218,7 @@ function init_configuration()
          //   'split_16ch'     : left shows channels 0-7, right shows channels 8-15.
          //   'mirrored_8ch'   : left and right both show channels 0-7.
          //   'quad_4ch_zero'  : two meters per side, each showing channels 0-3.
-         let ppm_preset             : PpmPreset            = 'quad_4ch_zero';
+         let ppm_preset             : PpmPreset            = 'split_16ch';
 
          // Used only when ppm_configuration_mode is 'manual'.
          // These may be numbers or arrays. Arrays allow each PPM widget on a side
@@ -389,52 +276,19 @@ function init_configuration()
          let ppm_width_max               = 0.09;
          let ppm_channel_min_width       = 4;
 
-         configure_ppms(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_ID],
-                        ppm_meters_left,
-                        ppm_channels_left,
-                        ppm_channels_offset_left,
-                        ppm_meters_right,
-                        ppm_channels_right,
-                        ppm_channels_offset_right,
-                        ppm_width,
-                        ppm_width_max,
-                        ppm_channel_min_width);
-
-         configure_ppms(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID],
-                        ppm_meters_left,
-                        ppm_channels_left,
-                        ppm_channels_offset_left,
-                        ppm_meters_right,
-                        ppm_channels_right,
-                        ppm_channels_offset_right,
-                        ppm_width,
-                        ppm_width_max,
-                        ppm_channel_min_width);
-
-         configure_ppms(parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_ID],
-                        ppm_meters_left,
-                        ppm_channels_left,
-                        ppm_channels_offset_left,
-                        ppm_meters_right,
-                        ppm_channels_right,
-                        ppm_channels_offset_right,
-                        ppm_width,
-                        ppm_width_max,
-                        ppm_channel_min_width);
-
-         configure_ppms(parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_TALLY_ID],
-                        ppm_meters_left,
-                        ppm_channels_left,
-                        ppm_channels_offset_left,
-                        ppm_meters_right,
-                        ppm_channels_right,
-                        ppm_channels_offset_right,
-                        ppm_width,
-                        ppm_width_max,
-                        ppm_channel_min_width);
+         configure_default_ppm_layouts(parameters,
+                                       ppm_meters_left,
+                                       ppm_channels_left,
+                                       ppm_channels_offset_left,
+                                       ppm_meters_right,
+                                       ppm_channels_right,
+                                       ppm_channels_offset_right,
+                                       ppm_width,
+                                       ppm_width_max,
+                                       ppm_channel_min_width);
       }
       
-      // 6. Configure Rasters (Canvas Sizes)
+      // 7. Configure Rasters (Canvas Sizes)
       // Enables 1080p and UHD raster generation. 
       // RASTER_1920x1080_ID corresponds to index 1 in the config array.
       {
@@ -447,7 +301,7 @@ function init_configuration()
          parameters.raster_configurations[RASTER_3840x2160_ID].layout_style_bgnd_color  = 'black';
       }    
       
-      // 7. Execute Generation
+      // 8. Execute Generation
       // Calls the library function to convert the `parameters` object into an array of Layout Objects.
       let layouts                   = generate_all_layouts(parameters);
       
@@ -456,7 +310,7 @@ function init_configuration()
          get_proviews_valorant('https://stream.v4.controller.barracks.gg/...',0,layouts);
       }*/
 
-      // 8. Add generated layouts to the result
+      // 9. Add generated layouts to the result
       {      
          for(let i = 0; i < layouts.length;i++)
          {
@@ -468,22 +322,32 @@ function init_configuration()
    //--------------------------------------------------------------------------------------
    // MULTIVIEWER HEADS CONFIGURATION
    //--------------------------------------------------------------------------------------
-   // This array defines the physical/logical outputs. 
-   // It maps a Head Name ("MV 1") to a resolution (Raster) and a default starting Layout.
+   // This array defines the physical/logical outputs.
+   // It maps a Head Name ("MANIFOLD MV 1") to a resolution (Raster), refresh rate,
+   // and default starting layout.
+   //
+   // Raster options:
+   //   '1280x720'
+   //   '1920x1080'
+   //   '3840x2160'
+   //
+   // Refresh-rate options used by this configuration:
+   //   'p50Hz'
+   //   'p59.94Hz'
 
    let heads_description = [
       
       // FHD Heads
-      {id : 0,  name : 'MANIFOLD MV 1',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
-      {id : 1,  name : 'MANIFOLD MV 2',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
-      {id : 2,  name : 'MANIFOLD MV 3',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
-      {id : 3,  name : 'MANIFOLD MV 4',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
-      //{id : 4,  name : 'MANIFOLD MV 5',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
-      //{id : 5,  name : 'MANIFOLD MV 6',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      {id : 0,  name : 'MANIFOLD MV 1',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      {id : 1,  name : 'MANIFOLD MV 2',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      {id : 2,  name : 'MANIFOLD MV 3',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      {id : 3,  name : 'MANIFOLD MV 4',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      {id : 4,  name : 'MANIFOLD MV 5',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      {id : 5,  name : 'MANIFOLD MV 6',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
       
       // UHD Heads
-      //{id : 6,  name : 'MANIFOLD UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
-      //{id : 7,  name : 'MANIFOLD UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 36,audio_inputs_max_num : 144,metadata_inputs_max_num : 1},
+      //{id : 6,  name : 'MANIFOLD UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 65,metadata_inputs_max_num : 1},
+      //{id : 7,  name : 'MANIFOLD UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 65,metadata_inputs_max_num : 1},
    ];
 
    // Generate DB records for Heads
@@ -498,14 +362,14 @@ function init_configuration()
             db_table_records   : [
                {                 
                   //user_afu_id                             : heads_description[i].user_afu_id, //Use this to pin a head to an AFU. Reversely, comment out for auto load balance                  
-                  name                                    : heads_description[i].name,//`Head ${i}`,
+                  name                                    : heads_description[i].name,
                   video_inputs_max_num                    : heads_description[i].video_inputs_max_num,
                   audio_inputs_max_num                    : heads_description[i].audio_inputs_max_num,
                   metadata_inputs_max_num                 : heads_description[i].metadata_inputs_max_num,
 
                   // Define how many audio and metadata streams exist per video. 1 is normally for single 2110-30 16-channel audio streams. 
                   // 2 would be when there are 2 x 2110-30 8-channel streams for each video
-                  audio_inputs_per_video_input_max_num    : 4,
+                  audio_inputs_per_video_input_max_num    : 1,
                   metadata_inputs_per_video_input_max_num : 1,
 
                   display_mode                            : 'on',                                           

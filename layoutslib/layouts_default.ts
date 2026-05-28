@@ -1,3 +1,6 @@
+// -----------------------------------------------------------------------------
+// GENERIC UTILITIES
+// -----------------------------------------------------------------------------
 export function round_to_even(value : number)
 {
     let result = 2*Math.floor(value/2);
@@ -8,6 +11,231 @@ export function clone<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
 }
 
+// -----------------------------------------------------------------------------
+// CLUSTER-FACING CONFIGURATION TYPES
+// -----------------------------------------------------------------------------
+export type PpmValueConfiguration = number | number[];
+export type MonitorDisplayMode = 'label' |
+                                 'parent_video_source_name' |
+                                 'parent_video_source_standard' |
+                                 'parent_video_source_tally_label' |
+                                 'parent_video_source_user_label_0' |
+                                 'parent_video_source_user_label_1' |
+                                 'parent_video_source_standard_interface' |
+                                 'parent_video_source_standard_tcs';
+
+// -----------------------------------------------------------------------------
+// PPM CONFIGURATION HELPERS
+// -----------------------------------------------------------------------------
+function get_ppm_value(value : PpmValueConfiguration, index : number)
+{
+    if(Array.isArray(value))
+    {
+        return value[index] ?? value[value.length - 1];
+    }
+
+    return value;
+}
+
+function validate_ppm_parameters(ppm_meters : number,
+                                 ppm_channels : PpmValueConfiguration,
+                                 ppm_channels_offset : PpmValueConfiguration,
+                                 ppm_width : number,
+                                 ppm_width_max : number,
+                                 ppm_channel_min_width : number,
+                                 side_name : string)
+{
+    if(ppm_meters < 0)
+    {
+        throw new Error(`${side_name}: ppm_meters must be 0 or greater`);
+    }
+    if(ppm_width <= 0)
+    {
+        throw new Error(`${side_name}: ppm_width must be greater than 0`);
+    }
+    if(ppm_width_max < ppm_width)
+    {
+        throw new Error(`${side_name}: ppm_width_max must be greater than or equal to ppm_width`);
+    }
+    if(ppm_channel_min_width <= 0)
+    {
+        throw new Error(`${side_name}: ppm_channel_min_width must be greater than 0`);
+    }
+    if(Array.isArray(ppm_channels) && ppm_channels.length == 0)
+    {
+        throw new Error(`${side_name}: ppm_channels array must not be empty`);
+    }
+    if(Array.isArray(ppm_channels_offset) && ppm_channels_offset.length == 0)
+    {
+        throw new Error(`${side_name}: ppm_channels_offset array must not be empty`);
+    }
+
+    for(let i = 0; i < ppm_meters;i++)
+    {
+        if(get_ppm_value(ppm_channels,i) <= 0)
+        {
+            throw new Error(`${side_name}: ppm_channels must be greater than 0`);
+        }
+        if(get_ppm_value(ppm_channels_offset,i) < 0)
+        {
+            throw new Error(`${side_name}: ppm_channels_offset must be 0 or greater`);
+        }
+    }
+}
+
+function copy_ppm_cell_style(target_cell : any, source_cell : any)
+{
+    if(source_cell == null)
+    {
+        return;
+    }
+
+    for(let key of Object.keys(source_cell))
+    {
+        // Keep callers in charge of channel mapping and visibility. Some legacy
+        // inside PPM styles use style_opacity=0, which hides rebuilt widgets.
+        if((key != 'channels_offset') && (key != 'channels_num') && (key != 'style_opacity'))
+        {
+            target_cell[key] = source_cell[key];
+        }
+    }
+}
+
+function build_ppms_from_parameters(existing_ppms : any,
+                                    ppm_meters : number,
+                                    ppm_channels : PpmValueConfiguration,
+                                    ppm_channels_offset : PpmValueConfiguration,
+                                    ppm_width : number,
+                                    ppm_width_max : number,
+                                    ppm_channel_min_width : number)
+{
+    if(ppm_meters == 0)
+    {
+        return null;
+    }
+
+    let ppms : any = get_default_ppms(ppm_meters);
+    if(existing_ppms != null)
+    {
+        ppms.alignment = existing_ppms.alignment;
+    }
+    ppms.width                  = ppm_width;
+    ppms.width_max              = ppm_width_max;
+    ppms.channel_min_width      = ppm_channel_min_width;
+
+    for(let i = 0; i < ppm_meters;i++)
+    {
+        if(existing_ppms != null)
+        {
+            // Preserve visual tuning from the source style while replacing only
+            // the requested channel mapping.
+            copy_ppm_cell_style(ppms.cells[i],existing_ppms.cells[Math.min(i,existing_ppms.cells.length - 1)]);
+        }
+        ppms.cells[i].channels_offset = get_ppm_value(ppm_channels_offset,i);
+        ppms.cells[i].channels_num    = get_ppm_value(ppm_channels,i);
+    }
+
+    return ppms;
+}
+
+export function configure_ppms(pip_configuration : any,
+                               ppm_meters_left : number,
+                               ppm_channels_left : PpmValueConfiguration,
+                               ppm_channels_offset_left : PpmValueConfiguration,
+                               ppm_meters_right : number,
+                               ppm_channels_right : PpmValueConfiguration,
+                               ppm_channels_offset_right : PpmValueConfiguration,
+                               ppm_width : number,
+                               ppm_width_max : number,
+                               ppm_channel_min_width : number)
+{
+    validate_ppm_parameters(ppm_meters_left,ppm_channels_left,ppm_channels_offset_left,ppm_width,ppm_width_max,ppm_channel_min_width,'PPM left');
+    validate_ppm_parameters(ppm_meters_right,ppm_channels_right,ppm_channels_offset_right,ppm_width,ppm_width_max,ppm_channel_min_width,'PPM right');
+
+    pip_configuration.ppms_left  = build_ppms_from_parameters(pip_configuration.ppms_left,
+                                                              ppm_meters_left,
+                                                              ppm_channels_left,
+                                                              ppm_channels_offset_left,
+                                                              ppm_width,
+                                                              ppm_width_max,
+                                                              ppm_channel_min_width);
+    pip_configuration.ppms_right = build_ppms_from_parameters(pip_configuration.ppms_right,
+                                                              ppm_meters_right,
+                                                              ppm_channels_right,
+                                                              ppm_channels_offset_right,
+                                                              ppm_width,
+                                                              ppm_width_max,
+                                                              ppm_channel_min_width);
+}
+
+export function configure_default_ppm_layouts(parameters : any,
+                                             ppm_meters_left : number,
+                                             ppm_channels_left : PpmValueConfiguration,
+                                             ppm_channels_offset_left : PpmValueConfiguration,
+                                             ppm_meters_right : number,
+                                             ppm_channels_right : PpmValueConfiguration,
+                                             ppm_channels_offset_right : PpmValueConfiguration,
+                                             ppm_width : number,
+                                             ppm_width_max : number,
+                                             ppm_channel_min_width : number)
+{
+    let ppm_layout_ids = [
+        OUTSIDE_LAYOUTS_UMD_PPM_ID,
+        OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
+        INSIDE_LAYOUTS_UMD_PPM_ID,
+        INSIDE_LAYOUTS_UMD_PPM_TALLY_ID
+    ];
+
+    for(let i = 0; i < ppm_layout_ids.length;i++)
+    {
+        configure_ppms(parameters.pip_configurations[ppm_layout_ids[i]],
+                       ppm_meters_left,
+                       ppm_channels_left,
+                       ppm_channels_offset_left,
+                       ppm_meters_right,
+                       ppm_channels_right,
+                       ppm_channels_offset_right,
+                       ppm_width,
+                       ppm_width_max,
+                       ppm_channel_min_width);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// MONITOR DISPLAY CONFIGURATION HELPERS
+// -----------------------------------------------------------------------------
+function configure_md_modes(md_configuration : any, modes : MonitorDisplayMode | MonitorDisplayMode[])
+{
+    if(md_configuration == null)
+    {
+        return;
+    }
+
+    for(let i = 0; i < md_configuration.cells.length;i++)
+    {
+        md_configuration.cells[i].mode = Array.isArray(modes) ? modes[Math.min(i,modes.length - 1)] : modes;
+    }
+}
+
+export function configure_existing_umd_modes(parameters : any, modes : MonitorDisplayMode | MonitorDisplayMode[])
+{
+    for(let i = 0; i < parameters.pip_configurations.length;i++)
+    {
+        configure_md_modes(parameters.pip_configurations[i].umd,modes);
+    }
+}
+
+export function configure_existing_omd_modes(parameters : any, modes : MonitorDisplayMode | MonitorDisplayMode[])
+{
+    for(let i = 0; i < parameters.pip_configurations.length;i++)
+    {
+        configure_md_modes(parameters.pip_configurations[i].omd,modes);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// LAYOUT GENERATION INTERNALS
+// -----------------------------------------------------------------------------
 function generate_md(pip_id : any,md_geometry : any,md_parameters : any,layout : any,pip_interwidget_gap_x_size : any,on_parent_id_index : number)
 {
     let current_x   = md_geometry.x;
