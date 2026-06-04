@@ -327,13 +327,13 @@ function init_configuration()
    // and default starting layout.
    //
    // Raster options:
-   //   '1280x720'
-   //   '1920x1080'
-   //   '3840x2160'
+   //   '720x486','720x576','1280x720','1920x1035','1920x1080','2048x1080',
+   //   '3840x2160','4096x2160','7680x4320','8192x4320'
    //
-   // Refresh-rate options used by this configuration:
-   //   'p50Hz'
-   //   'p59.94Hz'
+   // Refresh-rate options:
+   //   'p23.98Hz','sF23.98Hz','p24Hz','sF24Hz','p25Hz','sF25Hz','p29.97Hz','sF29.97Hz',
+   //   'p30Hz','sF30Hz','p47.95Hz','i47.95Hz','p48Hz','i48Hz','p50Hz','i50Hz',
+   //   'p59.94Hz','i59.94Hz','p60Hz','i60Hz','p100Hz','p119.88Hz','p120Hz'
 
    let heads_description = [
       
@@ -377,7 +377,8 @@ function init_configuration()
                   video_refresh_rate_id                   : heads_description[i].video_refresh_rate_id,                                
                   layout_id                               : heads_description[i].layout_id,                                                
                   ip_addresses_range_id                   : 10, // Maps to 'Multiviewer Heads IP Range' in cloud.t
-                  video_tcs                               : 'SDR' //Options are : ('SDR','HLG','PQ','LINEAR')
+                  video_tcs                               : 'SDR', //Options are : ('SDR','HLG','PQ','LINEAR')
+                  extra_time_offset                       : 0 //Offset in nanoseconds. For 59.94Hz use 14815 per line. For 50Hz use 17780 per line.
                }
             ]
          };                                              
