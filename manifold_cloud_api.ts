@@ -8,6 +8,8 @@ import WebSocket, { MessageEvent } from 'ws';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
+const DEFAULT_JOBS_WEBSOCKET_URL = 'ws://127.0.0.1:3000/jobs/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtb2RlIjoicncifQ.QKGnMJe41OFZcjz_qQSplmWAmVd_hmVjijKUNoJYpis';
+
 interface RequestOptions {
   headers?: Record<string, string>;
   timeout?: number; // milliseconds
@@ -137,11 +139,11 @@ export class ManifoldCloudAPI {
   private baseURL: string;
   private token: string | null = null;           // JWT token (set after login)
   private apiKey?: string;                       // Optional static API key fallback
-  private jobsWebSocketURL?: string;
+  private jobsWebSocketURL: string;
   private defaultTimeout = 300_000;               // 300 seconds
 
 
-  constructor(baseURL: string, apiKey?: string, jobsWebSocketURL: string | undefined = process.env.MANIFOLD_JOBS_WS_URL) {
+  constructor(baseURL: string, apiKey?: string, jobsWebSocketURL: string = process.env.MANIFOLD_JOBS_WS_URL ?? DEFAULT_JOBS_WEBSOCKET_URL) {
     if (!baseURL) throw new Error('baseURL is required');
     this.baseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
     this.apiKey = apiKey;
@@ -286,9 +288,6 @@ export class ManifoldCloudAPI {
     return this.rawRequest<T>('POST', endpoint, data, options);
   }
   async post_and_wait<T>(endpoint: string, data?: any, timeoutMs: number = 30000) {
-    if(!this.jobsWebSocketURL) {
-      throw new Error('MANIFOLD_JOBS_WS_URL is required for asynchronous API operations');
-    }
     const result = await this.post(endpoint,data,{timeout: timeoutMs});
     let wait_result = null;
     try {
@@ -303,9 +302,6 @@ export class ManifoldCloudAPI {
     return this.rawRequest<T>('PATCH', endpoint, data, options);
   }
   async patch_and_wait<T>(endpoint: string, data?: any, timeoutMs: number = 30000) {
-    if(!this.jobsWebSocketURL) {
-      throw new Error('MANIFOLD_JOBS_WS_URL is required for asynchronous API operations');
-    }
     const result = await this.patch(endpoint,data,{timeout: timeoutMs});
     let wait_result = null;
     try {
@@ -320,9 +316,6 @@ export class ManifoldCloudAPI {
     return this.rawRequest<T>('DELETE', endpoint, data, options);
   }
   async delete_and_wait<T>(endpoint: string, data?: any, timeoutMs: number = 30000) {
-    if(!this.jobsWebSocketURL) {
-      throw new Error('MANIFOLD_JOBS_WS_URL is required for asynchronous API operations');
-    }
     const result = await this.delete(endpoint,data,{timeout: timeoutMs});
     let wait_result = null;
     try {

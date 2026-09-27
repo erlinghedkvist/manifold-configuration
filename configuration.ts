@@ -378,8 +378,7 @@ async function get_luts3D()
   return luts;
 }
 
-// post_and_wait also requires MANIFOLD_JOBS_WS_URL, for example:
-// ws://127.0.0.1:3000/jobs/<access-token>
+// MANIFOLD_JOBS_WS_URL may override the API client's default local jobs socket.
 const api = new ManifoldCloudAPI('http://127.0.0.1/v1/manifold/');
 //const api = new ManifoldCloudAPI('http://172.16.218.169/v1/manifold/');
 
