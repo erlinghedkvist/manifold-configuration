@@ -1,0 +1,15 @@
+{
+  "name": "manifold-configuration",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^7.0.2"
+  }
+}

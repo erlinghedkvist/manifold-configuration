@@ -12,3 +12,6 @@
 *.log
 tmp/
 temp/
+
+.DS_Store
+node_modules/

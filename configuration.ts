@@ -39,8 +39,6 @@ import type {
         MonitorDisplayMode,
         PpmValueConfiguration
 } from './layouts_default.js';
-import {services_test_routing}                                                                                            from './manifold_cloud_api_routing.js';
-import {services_test_tally_and_labels}                                                                                   from './manifold_cloud_api_tally_labels.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -380,6 +378,8 @@ async function get_luts3D()
   return luts;
 }
 
+// post_and_wait also requires MANIFOLD_JOBS_WS_URL, for example:
+// ws://127.0.0.1:3000/jobs/<access-token>
 const api = new ManifoldCloudAPI('http://127.0.0.1/v1/manifold/');
 //const api = new ManifoldCloudAPI('http://172.16.218.169/v1/manifold/');
 
