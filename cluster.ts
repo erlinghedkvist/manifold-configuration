@@ -30,11 +30,11 @@ import {
    generate_all_layouts,
    generate_layouts_parameters,
    get_default_md
-} from './layoutslib/layouts_default';
-import type {MonitorDisplayMode} from './layoutslib/layouts_default';
+} from './layouts_default';
+import type {MonitorDisplayMode} from './layouts_default';
 
 // Optional import for specific Riot Games layouts (currently commented out in usage below)
-import {get_proviews_valorant} from './layoutslib/layouts_riot';
+// import {get_proviews_valorant} from './layoutslib/layouts_riot';
 
 
 function init_configuration()

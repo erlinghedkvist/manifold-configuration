@@ -12,7 +12,7 @@ export function clone<T>(obj: T): T {
 }
 
 // -----------------------------------------------------------------------------
-// CLUSTER-FACING CONFIGURATION TYPES
+// CONFIGURATION-FACING TYPES
 // -----------------------------------------------------------------------------
 export type PpmValueConfiguration = number | number[];
 export type MonitorDisplayMode = 'label' |
@@ -522,6 +522,10 @@ function generate_pip(pip_id : any,pip_geometry : any ,parameters : any,layout :
         {
             omd_y       = video_source_y + parameters.pip_interwidget_gap_y_size;
             hole_top    = (omd_height + parameters.pip_interwidget_gap_y_size);
+            if(parameters.pip_configuration.digital_clock != null)
+            {
+                hole_top += omd_height;
+            }
         } 
     }
 
@@ -918,29 +922,23 @@ function generate_standard_layouts(parameters : any,layouts : any[])
                     if(parameters.pip_configuration.full_size_1_way==true)
                     {
                         let parameters_copy                                     = clone(parameters);    
-                        pip_geometry.x                                          = 0;
-                        pip_geometry.y                                          = 0;
-                        pip_geometry.width                                      = parameters.video_raster_width;
-                        pip_geometry.height                                     = parameters.video_raster_height;
-                        
-                        parameters_copy.pip_configuration.omd                   = null;
-                        parameters_copy.pip_configuration.umd                   = null;                
-                        parameters_copy.pip_configuration.tally_lamps_left      = null;
-                        parameters_copy.pip_configuration.tally_lamps_right     = null;
-                        parameters_copy.pip_configuration.ppms_left             = null;
-                        parameters_copy.pip_configuration.ppms_right            = null;
-
-                        //
-                        parameters_copy.edge_gap_x_size                         = 0;
-                        parameters_copy.edge_gap_y_size                         = 0;
-                        parameters_copy.interpip_gap_x_size                     = 0;
-                        parameters_copy.interpip_gap_y_size                     = 0;
-                        //
-                        parameters_copy.pip_edge_gap_x_size                     = 0;
-                        parameters_copy.pip_edge_gap_y_size                     = 0;
-                        parameters_copy.pip_interwidget_gap_x_size              = 0;
-                        parameters_copy.pip_interwidget_gap_y_size              = 0;
-                        //
+                        if((parameters_copy.pip_configuration.omd == null) && (parameters_copy.pip_configuration.umd == null) &&
+                           (parameters_copy.pip_configuration.tally_lamps_left == null) && (parameters_copy.pip_configuration.tally_lamps_right == null) &&
+                           (parameters_copy.pip_configuration.ppms_left == null) && (parameters_copy.pip_configuration.ppms_right == null))
+                        {
+                            pip_geometry.x                                      = 0;
+                            pip_geometry.y                                      = 0;
+                            pip_geometry.width                                  = parameters.video_raster_width;
+                            pip_geometry.height                                 = parameters.video_raster_height;
+                            parameters_copy.edge_gap_x_size                     = 0;
+                            parameters_copy.edge_gap_y_size                     = 0;
+                            parameters_copy.interpip_gap_x_size                 = 0;
+                            parameters_copy.interpip_gap_y_size                 = 0;
+                            parameters_copy.pip_edge_gap_x_size                 = 0;
+                            parameters_copy.pip_edge_gap_y_size                 = 0;
+                            parameters_copy.pip_interwidget_gap_x_size          = 0;
+                            parameters_copy.pip_interwidget_gap_y_size          = 0;
+                        }
                         //console.log(parameters_copy);
                         generate_pip(pip_id++,pip_geometry,parameters_copy,layout);
                         skip = true;                        
@@ -983,7 +981,9 @@ function generate_layouts(parameters : any ,layouts : any[])
         {name : "13-way A",       size : 4, mode : "skip", tr : 0, br : 1, lc : 2, rc : 3},  
         {name : "13-way B",       size : 4, mode : "skip", tr : 0, br : 1, lc : 0, rc : 1},
         {name : "13-way C",       size : 4, mode : "skip", tr : 2, br : 3, lc : 2, rc : 3},
-        {name : "13-way D",       size : 4, mode : "skip", tr : 2, br : 3, lc : 0, rc : 1}
+        {name : "13-way D",       size : 4, mode : "skip", tr : 2, br : 3, lc : 0, rc : 1},
+        //
+        {name : "SSN Ingest",     size : 4, mode : "skip", tr : 1, br : 3, lc : 0, rc : 3}
     ];   
 
     for(let i = 0; i < layouts_description.length;i++) 
@@ -1060,7 +1060,7 @@ function generate_layouts(parameters : any ,layouts : any[])
                         }
                     }
                 }
-            }
+            }else
             if((i >= 12) && (i <= 16))
             {
                 for(let j = 0; j < 2;j++)
@@ -1080,6 +1080,35 @@ function generate_layouts(parameters : any ,layouts : any[])
                     }
                     generate_pip(pip_id++,pip_geometry,parameters,layout);
                 }
+            }else
+            if(i == 21)//SSN Ingest
+            {
+                for(let col = 0; col < 2;col++)
+                {
+                    let pip_geometry =
+                    {
+                        x       : (parameters.edge_gap_x_size + col*(large_pip_width  + parameters.interpip_gap_x_size)),
+                        y       : (parameters.edge_gap_y_size + (large_pip_height + parameters.interpip_gap_y_size)),
+                        width   : large_pip_width,
+                        height  : large_pip_height
+                    };
+                    generate_pip(pip_id++,pip_geometry,parameters,layout);
+                }
+
+                let digital_clock = {
+                    db_schema         : 'video',
+                    db_table          : 'multiviewer_layout_digital_clocks',
+                    db_table_records  :
+                    [
+                        {
+                            style_top    : parameters.edge_gap_y_size + pip_height + parameters.interpip_gap_y_size,
+                            style_left   : round_to_even(parameters.edge_gap_x_size + pip_width + parameters.interpip_gap_x_size),
+                            style_width  : pip_width*2,
+                            style_height : pip_height
+                        }
+                    ]
+                };
+                layout.children.push(digital_clock);
             }
         }
         //small pips
@@ -1377,32 +1406,6 @@ function generate_director_layouts2(parameters : any,layouts : any[])
                 width   : large_pip_width,
                 height  : large_pip_height
         };
-        
-        
-        if((i < 2) || (i >= 6) && (i <= 7))//"Director 4-way left", "Director 4-way",
-        {
-            let l_pip_width  = pip_width;
-            let l_pip_height = pip_height;
-            let l_pip_x_offset = 0;
-
-            if((i >= 6) && (i <= 7))
-            {
-                l_pip_width   = screen_width/2; 
-                l_pip_height  = screen_height/2;   
-                l_pip_x_offset = parameters.edge_gap_x_size;
-            }
-
-            if((i == 0) || (i == 6))
-            {
-                let nw_description = { size : 2 , size_v : 2 , mode : "insert",tr : 1, br : 1, lc : 0, rc : 0};                         
-                pips_helper(pip_id,nw_description,parameters_no_widgets_red_border,layout,l_pip_width,l_pip_height,l_pip_x_offset,0);
-                nw_description = { size : 2 , size_v : 2 , mode : "insert",tr : 1, br : 1, lc : 1, rc : 1};
-                pips_helper(pip_id,nw_description,parameters_no_widgets,layout,l_pip_width,l_pip_height,l_pip_x_offset,0);
-            } else {
-                let nw_description = { size : 2 , size_v : 2 , mode : "skip",tr : 0, br : 0, lc : 0, rc : 1};                         
-                pips_helper(pip_id,nw_description,parameters_no_widgets,layout,l_pip_width,l_pip_height,l_pip_x_offset,0);
-            }
-        }
         if((i >= 2) && (i <= 5))//"Director 6-way left","Director 6-way right",//"Director 7-way left","Director 7-way right"
         {           
             large_pip_add  = true;
@@ -1428,14 +1431,8 @@ function generate_director_layouts2(parameters : any,layouts : any[])
             mid_pip_width  = screen_width - large_pip_width - parameters.interpip_gap_x_size;
             mid_pip_x      = ((i == 2) || (i==4)) ?  parameters.edge_gap_x_size + large_pip_width + parameters.interpip_gap_x_size : parameters.edge_gap_x_size;
             mid_pip_y      = pip_y_offset*0 + pip_height + parameters.interpip_gap_y_size;  
-
-
         }
-        //large pip
-        if(large_pip_add)
-        {
-            generate_pip(pip_id.pip_id++,large_pip_geometry,large_pip_with_red_border ?  parameters_no_widgets_red_border : parameters_no_widgets,layout);  
-        }
+
         //mid pip       
         if(mid_pips_num > 0)
         {
@@ -1456,7 +1453,39 @@ function generate_director_layouts2(parameters : any,layouts : any[])
         {    
             pips_helper(pip_id,layouts_description[i],parameters,layout,pip_width,pip_height,pip_x_offset,pip_y_offset);
             //console.log(pip_id);
-        }   
+        }
+
+        if((i < 2) || (i >= 6) && (i <= 7))//"Director 4-way left", "Director 4-way",
+        {
+            let l_pip_width  = pip_width;
+            let l_pip_height = pip_height;
+            let l_pip_x_offset = 0;
+
+            if((i >= 6) && (i <= 7))
+            {
+                l_pip_width   = screen_width/2;
+                l_pip_height  = screen_height/2;
+                l_pip_x_offset = parameters.edge_gap_x_size;
+            }
+
+            if((i == 0) || (i == 6))
+            {
+                let nw_description = { size : 2 , size_v : 2 , mode : "insert",tr : 1, br : 1, lc : 0, rc : 0};
+                pips_helper(pip_id,nw_description,parameters_no_widgets_red_border,layout,l_pip_width,l_pip_height,l_pip_x_offset,0);
+                nw_description = { size : 2 , size_v : 2 , mode : "insert",tr : 1, br : 1, lc : 1, rc : 1};
+                pips_helper(pip_id,nw_description,parameters_no_widgets,layout,l_pip_width,l_pip_height,l_pip_x_offset,0);
+            } else {
+                let nw_description = { size : 2 , size_v : 2 , mode : "skip",tr : 0, br : 0, lc : 0, rc : 1};
+                pips_helper(pip_id,nw_description,parameters_no_widgets,layout,l_pip_width,l_pip_height,l_pip_x_offset,0);
+            }
+        }
+
+        //large pip
+        if(large_pip_add)
+        {
+            generate_pip(pip_id.pip_id++,large_pip_geometry,large_pip_with_red_border ? parameters_no_widgets_red_border : parameters_no_widgets,layout);
+        }
+
         //digital clock
         if((i >= 2) && (i <= 3)) 
         {
@@ -2213,7 +2242,7 @@ export function get_defaul_video_source()
         use_widgets_enable                              : false,
         //
         alarms_enable                                   : false,
-        alarms_on_video_source_not_assigned_show_logo   : true
+        alarms_on_video_source_not_assigned_show_logo   : false
     };
     return video_source;
 }
@@ -2495,9 +2524,15 @@ export function generate_layouts_parameters()
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].mode                          = 'parent_video_source_user_label_0',//'label';
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].width                         = 0.33;                
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].label                         = 'UMD 2';  
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].tally_bgnd_rules_mask         = 0;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].tally_fgnd_rules_mask         = 0;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].tally_border_rules_mask       = 0;
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].mode                          = 'parent_video_source_tally_label',//'parent_video_source_user_label_1',//'label';
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].width                         = 0.67;
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].label                         = 'UMD 1'; 
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].tally_bgnd_rules_mask         = 0;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].tally_fgnd_rules_mask         = 0;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].tally_border_rules_mask       = 0;
               
             }                
             parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_left                               = get_default_tally_lamps(2);
@@ -2505,7 +2540,7 @@ export function generate_layouts_parameters()
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_left.cells[0].style_bgnd_color         = RED_TALLY_CLR_OFF;
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_left.cells[0].tally_bgnd_rules_mask    = 1;                
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_left.cells[1].style_bgnd_color         = YELLOW_TALLY_CLR_OFF;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_left.cells[1].tally_bgnd_rules_mask    = 4;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_left.cells[1].tally_bgnd_rules_mask    = 8;
 
             }
             parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_right                                      = get_default_tally_lamps(2);
@@ -2513,22 +2548,18 @@ export function generate_layouts_parameters()
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_right.cells[0].style_bgnd_color         = GREEN_TALLY_CLR_OFF;
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_right.cells[0].tally_bgnd_rules_mask    = 2;
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_right.cells[1].style_bgnd_color         = BLUE_TALLY_CLR_OFF;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_right.cells[1].tally_bgnd_rules_mask    = 8;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].tally_lamps_right.cells[1].tally_bgnd_rules_mask    = 16;
             }
             
-            parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left                                      = get_default_ppms(2);
+            parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left                                      = get_default_ppms(1);
             {
                 parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left.cells[0].channels_offset         = 0;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left.cells[0].channels_num            = 4;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left.cells[1].channels_offset         = 0;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left.cells[1].channels_num            = 4;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_left.cells[0].channels_num            = 2;
             }
-            parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right                                     = get_default_ppms(2);
+            parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right                                     = get_default_ppms(1);
             {
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right.cells[0].channels_offset        = 0;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right.cells[0].channels_num           = 4;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right.cells[1].channels_offset        = 0;
-                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right.cells[1].channels_num           = 4;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right.cells[0].channels_offset        = 2;
+                parameters.pip_configurations[USER_0_LAYOUTS_ID].ppms_right.cells[0].channels_num           = 2;
             }
             parameters.pip_configurations[USER_0_LAYOUTS_ID].digital_clock                                  = get_default_digital_clock();        
         }
@@ -2547,6 +2578,38 @@ export function generate_layouts_parameters()
                 parameters.pip_configurations[USER_1_LAYOUTS_ID].umd.cells[0].label   = 'UMD 1';                  
             }
         }
+        //---------------------------------------------------------------------------------------------------------
+        //USER2
+        //---------------------------------------------------------------------------------------------------------
+        {
+            parameters.pip_configurations[USER_2_LAYOUTS_ID]                          = clone(parameters.pip_configurations[USER_0_LAYOUTS_ID]);
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].name                     = 'SKY 0';
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].omd                      = null;
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].umd                      = null;
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].tally_lamps_left         = null;
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].tally_lamps_right        = null;
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].ppms_left                = null;
+            parameters.pip_configurations[USER_2_LAYOUTS_ID].ppms_right               = null;
+        }
+        //---------------------------------------------------------------------------------------------------------
+        //USER3
+        //---------------------------------------------------------------------------------------------------------
+        {
+            parameters.pip_configurations[USER_3_LAYOUTS_ID]                                      = clone(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID]);
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].keep_aspect_ratio                    = true;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].video_source.border_alignment        = 'outside';
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].video_source.style_border_width      = 4;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].video_source.style_border_color      = 'gray';
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].video_source.tally_border_rules_mask = 19;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].name                                 = 'Riot';
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].umd                                  = get_default_md(1);
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].umd.alignment                        = 'outside';
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].omd                                  = null;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].tally_lamps_left                     = null;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].tally_lamps_right                    = null;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].ppms_left                            = null;
+            parameters.pip_configurations[USER_3_LAYOUTS_ID].ppms_right                           = null;
+        }
     }
     //rasters
     parameters.raster_configurations = get_default_rasters_configurations(RASTERS_NUM);
@@ -2562,6 +2625,11 @@ export function generate_layouts_parameters()
             parameters.raster_configurations[RASTER_1920x1080_ID].video_raster_id            = '1920x1080';            
             parameters.raster_configurations[RASTER_1920x1080_ID].video_raster_width         = 1920;
             parameters.raster_configurations[RASTER_1920x1080_ID].video_raster_height        = 1080;
+            //for pips
+            parameters.raster_configurations[RASTER_1920x1080_ID].edge_gap_x_size            = 0;
+            parameters.raster_configurations[RASTER_1920x1080_ID].edge_gap_y_size            = 0;
+            parameters.raster_configurations[RASTER_1920x1080_ID].interpip_gap_x_size        = 0;
+            parameters.raster_configurations[RASTER_1920x1080_ID].interpip_gap_y_size        = 0;
         }
         //RASTER_3840x2160_ID
         {
@@ -2569,10 +2637,10 @@ export function generate_layouts_parameters()
             parameters.raster_configurations[RASTER_3840x2160_ID].video_raster_width         = 3840;
             parameters.raster_configurations[RASTER_3840x2160_ID].video_raster_height        = 2160;
             //for pips
-            parameters.raster_configurations[RASTER_3840x2160_ID].edge_gap_x_size            = 4;
-            parameters.raster_configurations[RASTER_3840x2160_ID].edge_gap_y_size            = 4;
-            parameters.raster_configurations[RASTER_3840x2160_ID].interpip_gap_x_size        = 4;
-            parameters.raster_configurations[RASTER_3840x2160_ID].interpip_gap_y_size        = 4;
+            parameters.raster_configurations[RASTER_3840x2160_ID].edge_gap_x_size            = 0;
+            parameters.raster_configurations[RASTER_3840x2160_ID].edge_gap_y_size            = 0;
+            parameters.raster_configurations[RASTER_3840x2160_ID].interpip_gap_x_size        = 0;
+            parameters.raster_configurations[RASTER_3840x2160_ID].interpip_gap_y_size        = 0;
             //widgets inside pip
             parameters.raster_configurations[RASTER_3840x2160_ID].pip_edge_gap_x_size        = 4;
             parameters.raster_configurations[RASTER_3840x2160_ID].pip_edge_gap_y_size        = 4;
