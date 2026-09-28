@@ -505,7 +505,7 @@ async function run() {
                   {mac_address : "00:50:c2:f6:00:00",ip_address : "172.20.1.28"},
                   {mac_address : "00:50:c2:f6:00:01",ip_address : "172.20.2.28"},
                   {mac_address : "00:50:c2:f6:00:02",ip_address : "172.20.1.29"},
-                  {mac_address : "00:50:c2:f6:00:03",ip_address : "172.20.2.28"},
+                  {mac_address : "00:50:c2:f6:00:03",ip_address : "172.20.2.29"},
                   {mac_address : "00:50:c2:f6:00:04",ip_address : "10.151.1.45"},
                   {mac_address : "00:50:c2:f6:00:05",ip_address : "10.151.2.45"},
                   {mac_address : "00:50:c2:f6:00:06",ip_address : "10.151.1.47"},
