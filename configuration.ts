@@ -285,8 +285,8 @@ function get_services()
       {id : 5,  name : 'MANIFOLD MV 6',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
       
       // UHD Heads
-      //{id : 6,  name : 'MANIFOLD UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 65,metadata_inputs_max_num : 1},
-      //{id : 7,  name : 'MANIFOLD UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 65,metadata_inputs_max_num : 1},
+      //{id : 6,  name : 'MANIFOLD UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
+      //{id : 7,  name : 'MANIFOLD UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
    ];
 
 
