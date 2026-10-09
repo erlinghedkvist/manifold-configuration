@@ -1,4 +1,7 @@
 // cloud.ts
+//
+// This file is deprecated starting with manifold CLOUD v1.7 and is
+// only retained for reference.
 // -----------------------------------------------------------------------------
 // Global configuration for manifold CLOUD.
 // This file defines system-wide building blocks used by all clusters:

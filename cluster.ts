@@ -1,3 +1,6 @@
+//
+// This file is deprecated starting with manifold CLOUD v1.7 and is
+// only retained for reference.
 // -----------------------------------------------------------------------------
 // IMPORTS
 // -----------------------------------------------------------------------------
@@ -43,33 +46,33 @@ function init_configuration()
    // ROOT OBJECT STRUCTURE
    // --------------------------------------------------------------------------
    // This object defines the cluster identity and the active configuration state.
-   let result = 
+   let result =
    {
       cluster :{
-         name : "Manifold Cluster 1" 
+         name : "Manifold Cluster 1"
       },
       cluster_configuration : {
-         name         : "Configuration 1", 
+         name         : "Configuration 1",
          reset        : true, // If true, wipes previous layouts/heads on boot.
          activate     : true  // If true, this config becomes active immediately.
       },
-      children        : <any>[] // This array will be populated with Layouts and Heads below.     
-   };      
+      children        : <any>[] // This array will be populated with Layouts and Heads below.
+   };
    //
 
-   let child_id                     = 0;                  
-   
+   let child_id                     = 0;
+
    //--------------------------------------------------------------------------------------
    // LAYOUTS GENERATION CONFIGURATION
-   //--------------------------------------------------------------------------------------            
+   //--------------------------------------------------------------------------------------
    // The system does not hard-code every layout (2x2, 3x3, etc.). Instead, it defines
    // "Parameters" for layout families, and then programmatically generates them.
    {
       // 1. Generate Defaults:
-      // Creates a default 'parameters' object containing configurations for PIPs 
+      // Creates a default 'parameters' object containing configurations for PIPs
       // and Rasters.
-      let parameters        = generate_layouts_parameters();  
-      
+      let parameters        = generate_layouts_parameters();
+
       // 2. Global Enable/Disable:
       // Loop through all available configuration slots (LAYOUTS_CONFIGS_NUM = 14).
       //
@@ -83,7 +86,7 @@ function init_configuration()
       // here unless explicitly needed.
       for(let i = 0; i < LAYOUTS_CONFIGS_NUM;i++)
       {
-         parameters.pip_configurations[i].standard_layouts_enable                       = true;                                       
+         parameters.pip_configurations[i].standard_layouts_enable                       = true;
          parameters.pip_configurations[i].layouts_enable                                = true;
          parameters.pip_configurations[i].remote_layouts_enable                         = false;
          parameters.pip_configurations[i].director_layouts_enable                       = false;
@@ -120,53 +123,53 @@ function init_configuration()
        {
          // Start by cloning an existing style (UMD Outside) to inherit defaults.
          parameters.pip_configurations[USER_0_LAYOUTS_ID]                                    = clone(parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID]);
-         
+
          // Name this style 'outside (umd dual)' so it appears distinct in the UI.
          parameters.pip_configurations[USER_0_LAYOUTS_ID].name                               = 'outside (umd dual)';
-         
+
          // Remove the video border (2*0 = 0px width).
          parameters.pip_configurations[USER_0_LAYOUTS_ID].video_source.style_border_width    = 2*0;
-         
+
          // Define the UMD (Under Monitor Display) bar:
          // get_default_md(2) creates a UMD with 2 cells.
          parameters.pip_configurations[USER_0_LAYOUTS_ID].umd                                = get_default_md(2);
-         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.alignment                      = 'outside'; // Place UMD below video 
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.alignment                      = 'outside'; // Place UMD below video
          parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.width                          = 1.0;       // UMD matches PIP width
-         
+
          // Configure Cell 0 (Left side of UMD):
          // 'parent_video_source_standard' usually links to the logical source name.
          parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].mode                  = 'parent_video_source_standard',
-         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].width                 = 0.4; // Takes 40% width                     
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].width                 = 0.4; // Takes 40% width
          parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[0].style_border_width    = 1;
-         
+
          // Configure Cell 1 (Right side of UMD):
          // 'parent_video_source_name' links to the video source name alias.
          /* Options include: 'parent_video_source_tally_label', 'parent_video_source_user_label_0', etc. */
-         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].mode                  = 'parent_video_source_name', 
-         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].width                 = 0.6; // Takes 60% width          
-         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].style_border_width    = 1;  
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].mode                  = 'parent_video_source_name',
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].width                 = 0.6; // Takes 60% width
+         parameters.pip_configurations[USER_0_LAYOUTS_ID].umd.cells[1].style_border_width    = 1;
       }
 
 
       // 5. Toggle specific styles ON or OFF
       // This section determines which Layout Families are actually generated.
       // Setting .enable = false prevents the system from generating hundreds of unused layouts.
-      {       
+      {
          parameters.pip_configurations[DEFAULT_LAYOUTS_ID].enable                       = true;
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_ID].enable                   = false; // UMD below video
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_ID].enable               = true; // UMD + Audio Meters outside
-         
+
          // Tally style selection
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_TALLY_ID].enable             = false;
          parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID].enable         = true;
-         
+
          // Enable "Inside" styles (Overlay)
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_ID].enable                    = false; // UMD inside video
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_ID].enable                = true; // UMD + Audio Meters inside
-         
+
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_TALLY_ID].enable              = false;
          parameters.pip_configurations[INSIDE_LAYOUTS_UMD_PPM_TALLY_ID].enable          = false;
-         
+
          // Disable User Custom slots by default
          parameters.pip_configurations[USER_0_LAYOUTS_ID].enable                        = false; // The custom one defined above is OFF here
          parameters.pip_configurations[USER_1_LAYOUTS_ID].enable                        = false;
@@ -287,9 +290,9 @@ function init_configuration()
                                        ppm_width_max,
                                        ppm_channel_min_width);
       }
-      
+
       // 7. Configure Rasters (Canvas Sizes)
-      // Enables 1080p and UHD raster generation. 
+      // Enables 1080p and UHD raster generation.
       // RASTER_1920x1080_ID corresponds to index 1 in the config array.
       {
          parameters.raster_configurations[RASTER_1920x1080_ID].enable                   = true;
@@ -299,25 +302,25 @@ function init_configuration()
       {
          parameters.raster_configurations[RASTER_3840x2160_ID].enable                   = true;
          parameters.raster_configurations[RASTER_3840x2160_ID].layout_style_bgnd_color  = 'black';
-      }    
-      
+      }
+
       // 8. Execute Generation
       // Calls the library function to convert the `parameters` object into an array of Layout Objects.
       let layouts                   = generate_all_layouts(parameters);
-      
+
       // (Optional) External Riot Games Layouts
       /*{
          get_proviews_valorant('https://stream.v4.controller.barracks.gg/...',0,layouts);
       }*/
 
       // 9. Add generated layouts to the result
-      {      
+      {
          for(let i = 0; i < layouts.length;i++)
          {
-            result.children[child_id++] = layouts[i];                     
+            result.children[child_id++] = layouts[i];
          }
       }
-   }      
+   }
 
    //--------------------------------------------------------------------------------------
    // MULTIVIEWER HEADS CONFIGURATION
@@ -336,7 +339,7 @@ function init_configuration()
    //   'p59.94Hz','i59.94Hz','p60Hz','i60Hz','p100Hz','p119.88Hz','p120Hz'
 
    let heads_description = [
-      
+
       // FHD Heads
       {id : 0,  name : 'MANIFOLD MV 1',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
       {id : 1,  name : 'MANIFOLD MV 2',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
@@ -344,7 +347,7 @@ function init_configuration()
       {id : 3,  name : 'MANIFOLD MV 4',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
       {id : 4,  name : 'MANIFOLD MV 5',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
       {id : 5,  name : 'MANIFOLD MV 6',                video_raster_id :'1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      
+
       // UHD Heads
       //{id : 6,  name : 'MANIFOLD UHD MV 1',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 65,metadata_inputs_max_num : 1},
       //{id : 7,  name : 'MANIFOLD UHD MV 2',            video_raster_id :'3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 65,metadata_inputs_max_num : 1},
@@ -352,40 +355,40 @@ function init_configuration()
 
    // Generate DB records for Heads
 
-   {    
+   {
       for(let i = 0; i < heads_description.length;i++)
-      {               
-                                    	   
+      {
+
          let head = {
-            db_schema         : 'video',   
-            db_table          : 'multiviewer_heads',         
+            db_schema         : 'video',
+            db_table          : 'multiviewer_heads',
             db_table_records   : [
-               {                 
-                  //user_afu_id                             : heads_description[i].user_afu_id, //Use this to pin a head to an AFU. Reversely, comment out for auto load balance                  
+               {
+                  //user_afu_id                             : heads_description[i].user_afu_id, //Use this to pin a head to an AFU. Reversely, comment out for auto load balance
                   name                                    : heads_description[i].name,
                   video_inputs_max_num                    : heads_description[i].video_inputs_max_num,
                   audio_inputs_max_num                    : heads_description[i].audio_inputs_max_num,
                   metadata_inputs_max_num                 : heads_description[i].metadata_inputs_max_num,
 
-                  // Define how many audio and metadata streams exist per video. 1 is normally for single 2110-30 16-channel audio streams. 
+                  // Define how many audio and metadata streams exist per video. 1 is normally for single 2110-30 16-channel audio streams.
                   // 2 would be when there are 2 x 2110-30 8-channel streams for each video
                   audio_inputs_per_video_input_max_num    : 1,
                   metadata_inputs_per_video_input_max_num : 1,
 
-                  display_mode                            : 'on',                                           
+                  display_mode                            : 'on',
                   video_raster_id                         : heads_description[i].video_raster_id,
-                  video_refresh_rate_id                   : heads_description[i].video_refresh_rate_id,                                
-                  layout_id                               : heads_description[i].layout_id,                                                
+                  video_refresh_rate_id                   : heads_description[i].video_refresh_rate_id,
+                  layout_id                               : heads_description[i].layout_id,
                   ip_addresses_range_id                   : 10, // Maps to 'Multiviewer Heads IP Range' in cloud.t
                   video_tcs                               : 'SDR', //Options are : ('SDR','HLG','PQ','LINEAR')
                   extra_time_offset                       : 0 //Offset in nanoseconds. For 59.94Hz use 14815 per line. For 50Hz use 17780 per line.
                }
             ]
-         };                                              
-         result.children[child_id++] = head;       
+         };
+         result.children[child_id++] = head;
       }
    }
-      
+
    return result;
 }
 
