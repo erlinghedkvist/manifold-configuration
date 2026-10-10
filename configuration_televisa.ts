@@ -212,7 +212,7 @@ const service_configuration = {
    },
 
    udx : {
-      count                 : 0,
+      count                 : 32,
       video_raster_id       : '1920x1080',
       video_refresh_rate_id : 'p59.94Hz',
       ip_addresses_range_id : 6
@@ -229,13 +229,11 @@ const hardware_configuration = {
    //   'Bittware:520N-MX', 'prodesign:FALCON-Stratix', 'arkona:AT300'
    nodes : [
       {
-         name        : 'Manifold Server',
+         name        : 'FALCON-NEST - 0',
          ctrl_ipaddr : '127.0.0.1',
          accelerators : [
             {accelerator_type : 'prodesign:FALCON-Stratix',on_node_id : 0},
-            //{accelerator_type : 'Bittware:520N-MX',on_node_id : 1},
-            //{accelerator_type : 'Bittware:520N-MX',on_node_id : 2},
-            //{accelerator_type : 'Bittware:520N-MX',on_node_id : 3}
+            {accelerator_type : 'prodesign:FALCON-Stratix',on_node_id : 1}
          ]
       }
    ],
@@ -243,7 +241,7 @@ const hardware_configuration = {
    // License tokens make licensed capacity/features available to the
    // configured hardware and clusters.
    licenses : [
-      {name : 'license key 1',token : 'enter license token here'}
+      {name : 'license key 1',token : 'eyJhbGciOiJQUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MTE1OTQ2MzYsImlhdCI6MTc4MDAzNzY4NCwibWFuaWZvbGQtY2xvdWQtY2hpcC1pZHMiOiJbXCIweDY4NzY2OThBMTE3NjUxNUJcIixcIjB4Njg3NzBGOEE3RDhEQ0Q3MVwiXSIsIm1hbmlmb2xkLWNsb3VkLXBvaW50cyI6IjEyNjAiLCJtYW5pZm9sZC1jbG91ZC1zeXN0ZW0taWRzIjoiW1wiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwXCJdIiwibWFuaWZvbGQtY2xvdWQtdXBkYXRlcy1lbmFibGUiOiJ0cnVlIn0.MnBsWWZHHABFAgN_9Spl35dn-J0s4O1RYLlQdyenYzEDunX-6w4292Pzkb3yzwaHYuERcaGXlsOAnEicEuJ3lP4q8wlggflemiiaQn9PMlEvwZ9YmDWOVSVBm7wQ-my_-s1hMbRgVp5ETHFhyb3fYt3c4XGs73Ek96m7paLnaexvDF6Q25Cd3FzxfhBRSy8cEUZv0Qj2rPV12Bo8I3ExVVdLK0JO1mXYtU6sveachnHlDSli-LSwNHCewabphRXJzaKrEi1qZScX4R93AjHLrQyMUfbTrIM7UdmO7Q3ripqrPnLoR9BKHGhGn9tIdaYk_oVSMVIeZInWNSNcndJ_m6wm-TQwgKI82kM26rK8Bwd6BI9UYTyCMZ8DTCvtlPqNI-buy1hrC8yPlSnRp2ljNECV9fMKrbMCWh1zzREN7EdvGasZYELEdb6IXpFLUVmQtDdpEpd7M9MQz8_3xd9Bo7_ggtHPeT7_aWhHjUVRbE9bIcFYyvc7Tnqn1BNrVohhQIZcgV2hACZLE31EHx3y1Gh4UapuPwFsI4cKtqdsM5SXXhQ4wltJYpgasZj8h80-pXkjxgjHY_blzRhMkH3OhP-qMvTa8bmwDyp7_3dzCebLD2YUCIJWuUdeWWGeTXBjITxIDxC_a5CZqNQFmBtxFY1vRkezzRrlbSTJ6Lrv9e8'}
    ],
 
    // Each entry declares a cluster and the hardware, address ranges, and
@@ -253,23 +251,22 @@ const hardware_configuration = {
          name    : 'Manifold Cluster',
          // A stable UUID. A fixed value preserves its NMOS device identity
          // across restarts and configuration reloads.
-         id_uuid : '92070b3c-5a7c-11f1-a4cc-0f76e58751a5',
+         id_uuid : 'c1a92ebe-fe73-46ba-8f15-e9f35ea01ae5',
 
-         // Assign a complete node by name. Individual accelerators may instead
-         // be selected with: {node: {name: 'server name',accelerators: [0]}}
+         // Assign a complete node by its exact inventory name. Individual
+         // accelerators may instead be selected with:
+         // {node: {name: 'server name',accelerators: [0]}}
          accelerators : [
-            //{accelerator_server : {name : 'manifold400g'}},
-            //{node : {name : 'FALCON-NEST - 0',accelerators : [0]}},
-            {node_name : 'Manifold Server'}
+            {node_name : 'FALCON-NEST - 0'}
          ],
 
          // Explicit per-port addresses used by either manual assignment mode.
          // Entries correspond to network ports on the assigned accelerators.
          accelerators_ports_addresses : [
-            {mac_address : '00:50:c2:f6:00:00',ip_address : '172.20.1.28'},
-            {mac_address : '00:50:c2:f6:00:01',ip_address : '172.20.2.28'},
-            {mac_address : '00:50:c2:f6:00:02',ip_address : '172.20.1.29'},
-            {mac_address : '00:50:c2:f6:00:03',ip_address : '172.20.2.29'},
+            {mac_address : '00:50:c2:f6:00:00',ip_address : '10.151.1.41'},
+            {mac_address : '00:50:c2:f6:00:01',ip_address : '10.151.2.41'},
+            {mac_address : '00:50:c2:f6:00:02',ip_address : '10.151.1.43'},
+            {mac_address : '00:50:c2:f6:00:03',ip_address : '10.151.2.43'},
             {mac_address : '00:50:c2:f6:00:04',ip_address : '10.151.1.45'},
             {mac_address : '00:50:c2:f6:00:05',ip_address : '10.151.2.45'},
             {mac_address : '00:50:c2:f6:00:06',ip_address : '10.151.1.47'},
@@ -295,7 +292,7 @@ const hardware_configuration = {
             //   'manual': use ip_address values above
             //   'auto': allocate the requested count sequentially from the start
             ip_address_assignment_mode   : 'manual',
-            auto_ip_address_start        : '10.40.0.16',
+            auto_ip_address_start        : '172.16.250.0',
             auto_ip_address_num          : 16,
             // Ingress routing modes:
             //   'sps': ST 2022-7 seamless protection switching
@@ -309,7 +306,7 @@ const hardware_configuration = {
          clear_unused_sources : true,
          // PTP synchronization and domain used by this cluster.
          ptp_enable            : true,
-         ptp_domain_number     : 127,
+         ptp_domain_number     : 50,
          // Ember+ control server port.
          ember_port            : 9000,
 
@@ -350,8 +347,8 @@ const hardware_configuration = {
             {name : 'RL Generators IP Range',ip_addresses_start : '237.1.0.0',ip_addresses_num : 8192,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Video Test Patterns IP Range Primary',ip_addresses_start : '237.0.16.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Video Test Patterns IP Range Secondary',ip_addresses_start : '237.1.16.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'Multiviewer Heads IP Range Primary',ip_addresses_start : '237.0.32.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'Multiviewer Heads IP Range Secondary',ip_addresses_start : '237.1.32.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
+            {name : 'Multiviewer Heads IP Range Primary',ip_addresses_start : '239.111.89.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9020,udp_dst_port : 9020,rtp_payload_type : 97},
+            {name : 'Multiviewer Heads IP Range Secondary',ip_addresses_start : '239.211.89.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9020,udp_dst_port : 9020,rtp_payload_type : 97},
             {name : 'UDX IP Range Primary',ip_addresses_start : '237.0.48.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'UDX IP Range Secondary',ip_addresses_start : '237.1.48.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96}
          ]

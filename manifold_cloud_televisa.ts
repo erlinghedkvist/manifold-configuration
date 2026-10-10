@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// MANIFOLD CLOUD CONFIGURATION
+// MANIFOLD CLOUD CONFIGURATION — TELEVISA
 // -----------------------------------------------------------------------------
 // This file combines the former cloud.ts and cluster.ts configurations. It
 // defines the hardware and licenses available to manifold CLOUD, cluster-level
@@ -74,10 +74,10 @@ const layout_configuration = {
    families : {
       standard : true,
       featured : true,
-      remote   : false,
-      director : false,
-      vt_coord : false,
-      big      : false,
+      remote   : true,
+      director : true,
+      vt_coord : true,
+      big      : true,
       riot     : false
    },
 
@@ -92,8 +92,8 @@ const layout_configuration = {
    //   'parent_video_source_user_label_1',
    //   'parent_video_source_standard_interface',
    //   'parent_video_source_standard_tcs'.
-   default_umd_modes : ['parent_video_source_tally_label'] as MonitorDisplayMode[],
-   default_omd_modes : ['parent_video_source_standard_interface'] as MonitorDisplayMode[],
+   default_umd_modes : ['label'] as MonitorDisplayMode[],
+   default_omd_modes : ['label'] as MonitorDisplayMode[],
 
    custom_umd_layout : {
       slot               : USER_4_LAYOUTS_ID,
@@ -138,15 +138,15 @@ const layout_configuration = {
    } as PpmLayoutConfiguration,
 
    enabled_styles : {
-      [DEFAULT_LAYOUTS_ID]                : true,
-      [OUTSIDE_LAYOUTS_UMD_ID]            : true,
-      [OUTSIDE_LAYOUTS_UMD_PPM_ID]        : true,
-      [OUTSIDE_LAYOUTS_UMD_TALLY_ID]      : true,
+      [DEFAULT_LAYOUTS_ID]                : false,
+      [OUTSIDE_LAYOUTS_UMD_ID]            : false,
+      [OUTSIDE_LAYOUTS_UMD_PPM_ID]        : false,
+      [OUTSIDE_LAYOUTS_UMD_TALLY_ID]      : false,
       [OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID]  : true,
-      [INSIDE_LAYOUTS_UMD_ID]             : true,
-      [INSIDE_LAYOUTS_UMD_PPM_ID]         : true,
-      [INSIDE_LAYOUTS_UMD_TALLY_ID]       : true,
-      [INSIDE_LAYOUTS_UMD_PPM_TALLY_ID]   : true,
+      [INSIDE_LAYOUTS_UMD_ID]             : false,
+      [INSIDE_LAYOUTS_UMD_PPM_ID]         : false,
+      [INSIDE_LAYOUTS_UMD_TALLY_ID]       : false,
+      [INSIDE_LAYOUTS_UMD_PPM_TALLY_ID]   : false,
       [USER_0_LAYOUTS_ID]                 : false,
       [USER_1_LAYOUTS_ID]                 : false,
       [USER_2_LAYOUTS_ID]                 : false,
@@ -155,10 +155,8 @@ const layout_configuration = {
    },
 
    rasters : {
-      [RASTER_1920x1080_ID] : {enable : true, background : 'black'},
-      // Keep the UHD raster available for configuration but do not generate its
-      // layouts unless it is explicitly enabled here.
-      [RASTER_3840x2160_ID] : {enable : false,background : 'black'}
+      [RASTER_1920x1080_ID] : {enable : false,background : 'black'},
+      [RASTER_3840x2160_ID] : {enable : true, background : 'black'}
    }
 };
 
@@ -180,7 +178,7 @@ const service_configuration = {
       pattern_start_index   : 1,
       inserted_id_enable    : true,
       frame_id              : 0,
-      input_frames_num      : 3,
+      input_frames_num      : 1,
       colour_c0             : 512,
       colour_c1             : 512,
       colour_c2             : 512,
@@ -190,19 +188,7 @@ const service_configuration = {
       output_stream_enable  : true
    },
 
-   multiviewer_heads : [
-      // FHD Heads
-      {id : 0,name : 'MANIFOLD MV 1',video_raster_id : '1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 1,name : 'MANIFOLD MV 2',video_raster_id : '1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 2,name : 'MANIFOLD MV 3',video_raster_id : '1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 3,name : 'MANIFOLD MV 4',video_raster_id : '1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 4,name : 'MANIFOLD MV 5',video_raster_id : '1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1},
-      {id : 5,name : 'MANIFOLD MV 6',video_raster_id : '1920x1080',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1}
-
-      // UHD Heads
-      // {id : 6,name : 'MANIFOLD UHD MV 1',video_raster_id : '3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1}
-      // {id : 7,name : 'MANIFOLD UHD MV 2',video_raster_id : '3840x2160',video_refresh_rate_id : 'p59.94Hz',layout_id : 1,video_inputs_max_num : 64,audio_inputs_max_num : 64,metadata_inputs_max_num : 1}
-   ],
+   multiviewer_heads : [],
 
    multiviewer_defaults : {
       audio_inputs_per_video_input_max_num    : 1,
@@ -212,10 +198,10 @@ const service_configuration = {
    },
 
    udx : {
-      count                 : 0,
+      count                 : 36,
       video_raster_id       : '1920x1080',
-      video_refresh_rate_id : 'p59.94Hz',
-      ip_addresses_range_id : 6
+      video_refresh_rate_id : 'i59.94Hz',
+      ip_addresses_range_id : 4
    }
 };
 
@@ -229,13 +215,11 @@ const hardware_configuration = {
    //   'Bittware:520N-MX', 'prodesign:FALCON-Stratix', 'arkona:AT300'
    nodes : [
       {
-         name        : 'Manifold Server',
+         name        : 'FALCON-NEST - 0',
          ctrl_ipaddr : '127.0.0.1',
          accelerators : [
             {accelerator_type : 'prodesign:FALCON-Stratix',on_node_id : 0},
-            //{accelerator_type : 'Bittware:520N-MX',on_node_id : 1},
-            //{accelerator_type : 'Bittware:520N-MX',on_node_id : 2},
-            //{accelerator_type : 'Bittware:520N-MX',on_node_id : 3}
+            {accelerator_type : 'prodesign:FALCON-Stratix',on_node_id : 1}
          ]
       }
    ],
@@ -243,37 +227,35 @@ const hardware_configuration = {
    // License tokens make licensed capacity/features available to the
    // configured hardware and clusters.
    licenses : [
-      {name : 'license key 1',token : 'enter license token here'}
+      {name : 'license key 1',token : 'eyJhbGciOiJQUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MTE1OTQ2MzYsImlhdCI6MTc4MDAzNzY4NCwibWFuaWZvbGQtY2xvdWQtY2hpcC1pZHMiOiJbXCIweDY4NzY2OThBMTE3NjUxNUJcIixcIjB4Njg3NzBGOEE3RDhEQ0Q3MVwiXSIsIm1hbmlmb2xkLWNsb3VkLXBvaW50cyI6IjEyNjAiLCJtYW5pZm9sZC1jbG91ZC1zeXN0ZW0taWRzIjoiW1wiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwXCJdIiwibWFuaWZvbGQtY2xvdWQtdXBkYXRlcy1lbmFibGUiOiJ0cnVlIn0.MnBsWWZHHABFAgN_9Spl35dn-J0s4O1RYLlQdyenYzEDunX-6w4292Pzkb3yzwaHYuERcaGXlsOAnEicEuJ3lP4q8wlggflemiiaQn9PMlEvwZ9YmDWOVSVBm7wQ-my_-s1hMbRgVp5ETHFhyb3fYt3c4XGs73Ek96m7paLnaexvDF6Q25Cd3FzxfhBRSy8cEUZv0Qj2rPV12Bo8I3ExVVdLK0JO1mXYtU6sveachnHlDSli-LSwNHCewabphRXJzaKrEi1qZScX4R93AjHLrQyMUfbTrIM7UdmO7Q3ripqrPnLoR9BKHGhGn9tIdaYk_oVSMVIeZInWNSNcndJ_m6wm-TQwgKI82kM26rK8Bwd6BI9UYTyCMZ8DTCvtlPqNI-buy1hrC8yPlSnRp2ljNECV9fMKrbMCWh1zzREN7EdvGasZYELEdb6IXpFLUVmQtDdpEpd7M9MQz8_3xd9Bo7_ggtHPeT7_aWhHjUVRbE9bIcFYyvc7Tnqn1BNrVohhQIZcgV2hACZLE31EHx3y1Gh4UapuPwFsI4cKtqdsM5SXXhQ4wltJYpgasZj8h80-pXkjxgjHY_blzRhMkH3OhP-qMvTa8bmwDyp7_3dzCebLD2YUCIJWuUdeWWGeTXBjITxIDxC_a5CZqNQFmBtxFY1vRkezzRrlbSTJ6Lrv9e8'}
    ],
 
    // Each entry declares a cluster and the hardware, address ranges, and
    // services assigned to it.
    clusters : [
       {
-         name    : 'Manifold Cluster',
+         name    : 'UDX Cluster 1',
          // A stable UUID. A fixed value preserves its NMOS device identity
          // across restarts and configuration reloads.
-         id_uuid : '92070b3c-5a7c-11f1-a4cc-0f76e58751a5',
+         id_uuid : 'c1a92ebe-fe73-46ba-8f15-e9f35ea01ae5',
 
          // Assign a complete node by name. Individual accelerators may instead
          // be selected with: {node: {name: 'server name',accelerators: [0]}}
          accelerators : [
-            //{accelerator_server : {name : 'manifold400g'}},
-            //{node : {name : 'FALCON-NEST - 0',accelerators : [0]}},
-            {node_name : 'Manifold Server'}
+            {node_name : 'FALCON-NEST - 0'}
          ],
 
          // Explicit per-port addresses used by either manual assignment mode.
          // Entries correspond to network ports on the assigned accelerators.
          accelerators_ports_addresses : [
-            {mac_address : '00:50:c2:f6:00:00',ip_address : '172.20.1.28'},
-            {mac_address : '00:50:c2:f6:00:01',ip_address : '172.20.2.28'},
-            {mac_address : '00:50:c2:f6:00:02',ip_address : '172.20.1.29'},
-            {mac_address : '00:50:c2:f6:00:03',ip_address : '172.20.2.29'},
-            {mac_address : '00:50:c2:f6:00:04',ip_address : '10.151.1.45'},
-            {mac_address : '00:50:c2:f6:00:05',ip_address : '10.151.2.45'},
-            {mac_address : '00:50:c2:f6:00:06',ip_address : '10.151.1.47'},
-            {mac_address : '00:50:c2:f6:00:07',ip_address : '10.151.2.47'},
+            {mac_address : '00:50:c2:f6:cc:41',ip_address : '1.11.89.1'},
+            {mac_address : '00:50:c2:f6:cc:42',ip_address : '2.11.89.1'},
+            {mac_address : '00:50:c2:f6:cc:43',ip_address : '1.11.93.1'},
+            {mac_address : '00:50:c2:f6:cc:44',ip_address : '2.11.93.1'},
+            {mac_address : '00:50:c2:f6:cc:45',ip_address : '1.11.97.1'},
+            {mac_address : '00:50:c2:f6:cc:46',ip_address : '2.11.97.1'},
+            {mac_address : '00:50:c2:f6:cc:47',ip_address : '1.11.101.1'},
+            {mac_address : '00:50:c2:f6:cc:48',ip_address : '2.11.101.1'},
             {mac_address : '00:50:c2:f6:00:08',ip_address : '10.151.1.49'},
             {mac_address : '00:50:c2:f6:00:09',ip_address : '10.151.2.49'},
             {mac_address : '00:50:c2:f6:00:10',ip_address : '10.151.1.51'},
@@ -288,14 +270,14 @@ const hardware_configuration = {
             // Per-port MAC assignment:
             //   'manual': use mac_address values above
             //   'auto': generate sequential MACs from the start value
-            mac_address_assignment_mode : 'auto',
-            auto_mac_address_start       : '00:50:c2:f6:00:00',
+            mac_address_assignment_mode : 'manual',
+            auto_mac_address_start       : '00:50:c2:f6:cc:00',
             auto_mac_address_inc         : 1,
             // Per-port IP assignment:
             //   'manual': use ip_address values above
             //   'auto': allocate the requested count sequentially from the start
             ip_address_assignment_mode   : 'manual',
-            auto_ip_address_start        : '10.40.0.16',
+            auto_ip_address_start        : '172.16.250.0',
             auto_ip_address_num          : 16,
             // Ingress routing modes:
             //   'sps': ST 2022-7 seamless protection switching
@@ -309,7 +291,7 @@ const hardware_configuration = {
          clear_unused_sources : true,
          // PTP synchronization and domain used by this cluster.
          ptp_enable            : true,
-         ptp_domain_number     : 127,
+         ptp_domain_number     : 50,
          // Ember+ control server port.
          ember_port            : 9000,
 
@@ -322,15 +304,15 @@ const hardware_configuration = {
             udp_port               : 8800,
             tcp_port               : 8801
          },
-         // Optional Plura timer sources:
-         // plura_timers : ['172.16.0.231'],
+         // Optional Plura timer sources.
+         plura_timers : ['172.16.0.231'],
 
          // IS-04/IS-05 registry URL and the host addresses advertised for
          // senders/receivers. Advertised hosts are normally server management
          // IP addresses.
          nmos : {
-            registry_url    : 'http://localhost:80',
-            advertised_hosts: ['10.10.1.58']
+            registry_url    : 'http://172.16.0.118:8010',
+            advertised_hosts: ['172.16.209.73']
          },
 
          // Multicast pools from which services allocate output addresses. A
@@ -350,10 +332,8 @@ const hardware_configuration = {
             {name : 'RL Generators IP Range',ip_addresses_start : '237.1.0.0',ip_addresses_num : 8192,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Video Test Patterns IP Range Primary',ip_addresses_start : '237.0.16.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Video Test Patterns IP Range Secondary',ip_addresses_start : '237.1.16.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'Multiviewer Heads IP Range Primary',ip_addresses_start : '237.0.32.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'Multiviewer Heads IP Range Secondary',ip_addresses_start : '237.1.32.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'UDX IP Range Primary',ip_addresses_start : '237.0.48.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'UDX IP Range Secondary',ip_addresses_start : '237.1.48.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96}
+            {name : 'Multiviewer Heads IP Range Primary',ip_addresses_start : '239.111.89.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9020,udp_dst_port : 9020,rtp_payload_type : 97},
+            {name : 'Multiviewer Heads IP Range Secondary',ip_addresses_start : '239.211.89.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9020,udp_dst_port : 9020,rtp_payload_type : 97}
          ]
       }
    ]
@@ -704,7 +684,8 @@ async function build_cloud_configuration_payload()
          tsl_udp_port                               : configuration.tsl.udp_port,
          tsl_tcp_port                               : configuration.tsl.tcp_port,
          nmos_registry_url                          : configuration.nmos.registry_url,
-         nmos_advertised_hosts                      : configuration.nmos.advertised_hosts
+         nmos_advertised_hosts                      : configuration.nmos.advertised_hosts,
+         plura_timers                               : configuration.plura_timers
       },
       services_ip_addresses_ranges : configuration.services_ip_addresses_ranges,
       services                     : get_services()
