@@ -320,7 +320,9 @@ const hardware_configuration = {
             connections_num        : 1,
             screens_per_connection : 65535,
             udp_port               : 8800,
-            tcp_port               : 8801
+            tcp_port               : 8801,
+            // Added to every screen id advertised by the TSL service.
+            on_screen_id_offset    : 0
          },
          // Optional Plura timer sources:
          // plura_timers : ['172.16.0.231'],
@@ -329,8 +331,12 @@ const hardware_configuration = {
          // senders/receivers. Advertised hosts are normally server management
          // IP addresses.
          nmos : {
-            registry_url    : 'http://localhost:80',
-            advertised_hosts: ['10.10.1.58']
+            //registry_url          : 'http://10.10.1.58:80',
+            advertised_hosts      : ['10.10.1.58'],
+            // Timeouts and heartbeat interval are expressed in seconds.
+            http_timeout          : 5,
+            resource_retry_timeout: 5,
+            heartbeat_interval    : 5
          },
 
          // Multicast pools from which services allocate output addresses. A
@@ -703,8 +709,12 @@ async function build_cloud_configuration_payload()
          tsl_screens_per_connection                 : configuration.tsl.screens_per_connection,
          tsl_udp_port                               : configuration.tsl.udp_port,
          tsl_tcp_port                               : configuration.tsl.tcp_port,
+         tsl_on_screen_id_offset                    : configuration.tsl.on_screen_id_offset,
          nmos_registry_url                          : configuration.nmos.registry_url,
-         nmos_advertised_hosts                      : configuration.nmos.advertised_hosts
+         nmos_advertised_hosts                      : configuration.nmos.advertised_hosts,
+         nmos_http_timeout                          : configuration.nmos.http_timeout,
+         nmos_resource_retry_timeout                : configuration.nmos.resource_retry_timeout,
+         nmos_heartbeat_interval                    : configuration.nmos.heartbeat_interval
       },
       services_ip_addresses_ranges : configuration.services_ip_addresses_ranges,
       services                     : get_services()
