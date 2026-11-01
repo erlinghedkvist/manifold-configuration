@@ -8,7 +8,10 @@
 
 // Layout helpers create the default parameter structures and turn the enabled
 // layout families and raster configurations into configuration records.
+// This module is supplied by the manifold CLOUD distribution at deployment.
+// @ts-ignore -- distribution dependency is intentionally not stored here.
 import ManifoldCloudAPI from './manifold_cloud_api.js';
+// This module is supplied by the manifold CLOUD distribution at deployment.
 import {
         generate_layouts_parameters,
         generate_all_layouts,
@@ -31,6 +34,7 @@ import {
         LAYOUTS_CONFIGS_NUM,
         clone,
         get_default_md
+// @ts-ignore -- distribution dependency is intentionally not stored here.
 } from './layouts_default.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
