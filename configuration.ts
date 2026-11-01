@@ -12,9 +12,6 @@ import ManifoldCloudAPI from './manifold_cloud_api.js';
 import {
         generate_layouts_parameters,
         generate_all_layouts,
-        configure_default_ppm_layouts,
-        configure_existing_umd_modes,
-        configure_existing_omd_modes,
         RASTER_1920x1080_ID,
         RASTER_3840x2160_ID,
         DEFAULT_LAYOUTS_ID,
@@ -35,16 +32,21 @@ import {
         clone,
         get_default_md
 } from './layouts_default.js';
-import type {
-        MonitorDisplayMode,
-        PpmValueConfiguration
-} from './layouts_default.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 // =============================================================================
 // USER-EDITABLE CONFIGURATION
 // =============================================================================
+
+type MonitorDisplayMode = 'label' |
+                          'parent_video_source_name' |
+                          'parent_video_source_standard' |
+                          'parent_video_source_tally_label' |
+                          'parent_video_source_user_label_0' |
+                          'parent_video_source_user_label_1' |
+                          'parent_video_source_standard_interface' |
+                          'parent_video_source_standard_tcs';
 
 const api_configuration = {
    url      : 'http://127.0.0.1/v1/manifold/',
@@ -81,20 +83,6 @@ const layout_configuration = {
       riot     : false
    },
 
-   // Set the default text source for every existing UMD and OMD cell. Supply
-   // one mode for all cells or an array for per-cell mapping; if a display has
-   // more cells than entries, the last entry is reused.
-   //
-   // Monitor-display mode options:
-   //   'label', 'parent_video_source_name',
-   //   'parent_video_source_standard', 'parent_video_source_tally_label',
-   //   'parent_video_source_user_label_0',
-   //   'parent_video_source_user_label_1',
-   //   'parent_video_source_standard_interface',
-   //   'parent_video_source_standard_tcs'.
-   default_umd_modes : ['parent_video_source_tally_label'] as MonitorDisplayMode[],
-   default_omd_modes : ['parent_video_source_standard_interface'] as MonitorDisplayMode[],
-
    custom_umd_layout : {
       slot               : USER_4_LAYOUTS_ID,
       based_on           : OUTSIDE_LAYOUTS_UMD_ID,
@@ -110,32 +98,11 @@ const layout_configuration = {
 
    alarms : {
       // Show alarms on the selected style, including a logo when no source is
-      // assigned. PPM channel mapping is configured globally below.
+      // assigned.
       style                       : OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
       enable                      : true,
       show_logo_when_unassigned   : true
    },
-
-   // Presets:
-   //   split_16ch: left channels 0-7, right channels 8-15
-   //   mirrored_8ch: both sides show channels 0-7
-   //   quad_4ch_zero: two meters per side, each showing channels 0-3
-   ppm : {
-      mode              : 'preset',
-      preset            : 'split_16ch',
-      // Manual values are used when mode is 'manual'. Arrays provide per-meter
-      // control; for example, [2,2] channels with offsets [0,2] creates meters
-      // for channels 0-1 and 2-3.
-      meters_left       : 1,
-      channels_left     : 8,
-      offset_left       : 0,
-      meters_right      : 1,
-      channels_right    : 8,
-      offset_right      : 8,
-      width             : 0.05,
-      width_max         : 0.09,
-      channel_min_width : 4
-   } as PpmLayoutConfiguration,
 
    enabled_styles : {
       [DEFAULT_LAYOUTS_ID]                : true,
@@ -391,22 +358,6 @@ function get_layouts()
          parameters.pip_configurations[i].riot_layouts_enable     = layout_configuration.families.riot;
       }
 
-      // Set the default text source for every existing UMD and OMD cell. Supply
-      // one mode for all cells or an array for per-cell mapping; if a display
-      // has more cells than entries, the last entry is reused.
-      //
-      // Monitor-display mode options:
-      //   'label', 'parent_video_source_name',
-      //   'parent_video_source_standard', 'parent_video_source_tally_label',
-      //   'parent_video_source_user_label_0',
-      //   'parent_video_source_user_label_1',
-      //   'parent_video_source_standard_interface',
-      //   'parent_video_source_standard_tcs'.
-      {
-         configure_existing_umd_modes(parameters,layout_configuration.default_umd_modes);
-         configure_existing_omd_modes(parameters,layout_configuration.default_omd_modes);
-      }
-
        // Example of deriving a custom layout style from an existing family.
        // get_default_md(2) creates a two-cell UMD (Under Monitor Display).
        {
@@ -414,11 +365,14 @@ function get_layouts()
          apply_layout_alarm_configuration(parameters);
       }
 
-      // Configure PPM meter count, channel mapping, and adaptive width for all
-      // built-in PPM layout styles. Channel counts and offsets accept either a
-      // number applied to every meter or an array with one value per meter.
+      // Use the server-compatible direct split-16 channel mapping. Rebuilding
+      // PPM structures with a custom helper is rejected by the target server.
       {
-         apply_ppm_configuration(parameters,layout_configuration.ppm);
+         const ppm_layout = parameters.pip_configurations[OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID];
+         ppm_layout.ppms_left.cells[0].channels_offset = 0;
+         ppm_layout.ppms_left.cells[0].channels_num = 8;
+         ppm_layout.ppms_right.cells[0].channels_offset = 8;
+         ppm_layout.ppms_right.cells[0].channels_num = 8;
       }
 
       // Enable only the PIP styles that should be generated. Disabling unused
@@ -628,25 +582,7 @@ async function run() {
 // -----------------------------------------------------------------------------
 // IMPLEMENTATION HELPERS
 // -----------------------------------------------------------------------------
-// The editable choices live near the top of the file. The translation from a
-// named PPM preset to the layout generator's individual arguments stays here.
-
-type PpmConfigurationMode = 'preset' | 'manual';
-type PpmPreset = 'split_16ch' | 'mirrored_8ch' | 'quad_4ch_zero';
-
-type PpmLayoutConfiguration = {
-   mode              : PpmConfigurationMode,
-   preset            : PpmPreset,
-   meters_left       : number,
-   channels_left     : PpmValueConfiguration,
-   offset_left       : PpmValueConfiguration,
-   meters_right      : number,
-   channels_right    : PpmValueConfiguration,
-   offset_right      : PpmValueConfiguration,
-   width             : number,
-   width_max         : number,
-   channel_min_width : number
-};
+// The editable choices live near the top of the file.
 
 function apply_custom_umd_layout(parameters: ReturnType<typeof generate_layouts_parameters>)
 {
@@ -710,7 +646,7 @@ async function build_cloud_configuration_payload()
          tsl_udp_port                               : configuration.tsl.udp_port,
          tsl_tcp_port                               : configuration.tsl.tcp_port,
          tsl_on_screen_id_offset                    : configuration.tsl.on_screen_id_offset,
-         nmos_registry_url                          : configuration.nmos.registry_url,
+         nmos_registry_url                          : (configuration.nmos as {registry_url?: string}).registry_url,
          nmos_advertised_hosts                      : configuration.nmos.advertised_hosts,
          nmos_http_timeout                          : configuration.nmos.http_timeout,
          nmos_resource_retry_timeout                : configuration.nmos.resource_retry_timeout,
@@ -727,60 +663,6 @@ async function build_cloud_configuration_payload()
       layouts  : get_layouts(),
       luts3D   : await get_luts3D()
    };
-}
-
-function apply_ppm_configuration(
-   parameters: ReturnType<typeof generate_layouts_parameters>,
-   configuration: PpmLayoutConfiguration)
-{
-   let meters_left    = configuration.meters_left;
-   let channels_left  = configuration.channels_left;
-   let offset_left    = configuration.offset_left;
-   let meters_right   = configuration.meters_right;
-   let channels_right = configuration.channels_right;
-   let offset_right   = configuration.offset_right;
-
-   if(configuration.mode == 'preset')
-   {
-      switch(configuration.preset)
-      {
-         case 'split_16ch':
-            meters_left = 1;
-            channels_left = 8;
-            offset_left = 0;
-            meters_right = 1;
-            channels_right = 8;
-            offset_right = 8;
-            break;
-         case 'mirrored_8ch':
-            meters_left = 1;
-            channels_left = 8;
-            offset_left = 0;
-            meters_right = 1;
-            channels_right = 8;
-            offset_right = 0;
-            break;
-         case 'quad_4ch_zero':
-            meters_left = 2;
-            channels_left = 4;
-            offset_left = 0;
-            meters_right = 2;
-            channels_right = 4;
-            offset_right = 0;
-            break;
-      }
-   }
-
-   configure_default_ppm_layouts(parameters,
-                                 meters_left,
-                                 channels_left,
-                                 offset_left,
-                                 meters_right,
-                                 channels_right,
-                                 offset_right,
-                                 configuration.width,
-                                 configuration.width_max,
-                                 configuration.channel_min_width);
 }
 
 run();
