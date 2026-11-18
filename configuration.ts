@@ -87,42 +87,52 @@ const layout_configuration = {
       riot     : false
    },
 
-   custom_umd_layout : {
-      slot               : USER_4_LAYOUTS_ID,
-      based_on           : OUTSIDE_LAYOUTS_UMD_ID,
-      name               : 'outside (umd dual)',
-      video_border_width : 0,
-      alignment          : 'outside',
-      width              : 1.0,
-      cells              : [
-         {mode : 'parent_video_source_standard' as MonitorDisplayMode,width : 0.4,border_width : 1},
-         {mode : 'parent_video_source_name' as MonitorDisplayMode,width : 0.6,border_width : 1}
-      ]
-   },
+   // Examples of deriving custom styles from existing styles. Add more objects
+   // to this array when more than one custom style is required.
+   custom_styles : [
+      {
+         // Five user-defined style slots are available (USER_0 through USER_4).
+         // This example occupies the first slot and starts with a copy of the
+         // built-in outside-UMD style before applying the overrides below.
+         slot               : USER_0_LAYOUTS_ID,
+         based_on           : OUTSIDE_LAYOUTS_UMD_ID,
+         name               : 'outside (umd dual)',
 
-   alarms : {
-      // Show alarms on the selected style, including a logo when no source is
-      // assigned.
-      style                       : OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID,
-      enable                      : true,
-      show_logo_when_unassigned   : true
-   },
+         // video_border_width controls the border around the video itself;
+         // zero removes that border. "outside" places the UMD outside the
+         // video area, and width 1.0 makes it span the full available width.
+         video_border_width : 0,
+         alignment          : 'outside',
+         width              : 1.0,
 
-   enabled_styles : {
-      [DEFAULT_LAYOUTS_ID]                : true,
-      [OUTSIDE_LAYOUTS_UMD_ID]            : true,
-      [OUTSIDE_LAYOUTS_UMD_PPM_ID]        : true,
-      [OUTSIDE_LAYOUTS_UMD_TALLY_ID]      : true,
-      [OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID]  : true,
-      [INSIDE_LAYOUTS_UMD_ID]             : true,
-      [INSIDE_LAYOUTS_UMD_PPM_ID]         : true,
-      [INSIDE_LAYOUTS_UMD_TALLY_ID]       : true,
-      [INSIDE_LAYOUTS_UMD_PPM_TALLY_ID]   : true,
-      [USER_0_LAYOUTS_ID]                 : false,
-      [USER_1_LAYOUTS_ID]                 : false,
-      [USER_2_LAYOUTS_ID]                 : false,
-      [USER_3_LAYOUTS_ID]                 : false,
-      [USER_4_LAYOUTS_ID]                 : false
+         // Create a two-cell monitor display. The first cell occupies 40% of
+         // the UMD and displays the parent video source standard. The second
+         // occupies the remaining 60% and displays the parent source name.
+         // border_width controls the border around each individual cell.
+         cells              : [
+            {mode : 'parent_video_source_standard' as MonitorDisplayMode,width : 0.4,border_width : 1},
+            {mode : 'parent_video_source_name' as MonitorDisplayMode,width : 0.6,border_width : 1}
+         ]
+      }
+   ],
+
+   // Enable each style and configure its alarm behavior in one place. Keep
+   // disabled styles in this template so they can be enabled with one edit.
+   styles : {
+      [DEFAULT_LAYOUTS_ID]               : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [OUTSIDE_LAYOUTS_UMD_ID]           : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [OUTSIDE_LAYOUTS_UMD_PPM_ID]       : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [OUTSIDE_LAYOUTS_UMD_TALLY_ID]     : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [OUTSIDE_LAYOUTS_UMD_PPM_TALLY_ID] : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [INSIDE_LAYOUTS_UMD_ID]            : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [INSIDE_LAYOUTS_UMD_PPM_ID]        : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [INSIDE_LAYOUTS_UMD_TALLY_ID]      : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [INSIDE_LAYOUTS_UMD_PPM_TALLY_ID]  : {enable : true, alarms : {enable : false,show_logo_when_unassigned : true}},
+      [USER_0_LAYOUTS_ID]                : {enable : false,alarms : {enable : false,show_logo_when_unassigned : true}},
+      [USER_1_LAYOUTS_ID]                : {enable : false,alarms : {enable : false,show_logo_when_unassigned : true}},
+      [USER_2_LAYOUTS_ID]                : {enable : false,alarms : {enable : false,show_logo_when_unassigned : true}},
+      [USER_3_LAYOUTS_ID]                : {enable : false,alarms : {enable : false,show_logo_when_unassigned : true}},
+      [USER_4_LAYOUTS_ID]                : {enable : false,alarms : {enable : false,show_logo_when_unassigned : true}}
    },
 
    rasters : {
@@ -365,8 +375,8 @@ function get_layouts()
        // Example of deriving a custom layout style from an existing family.
        // get_default_md(2) creates a two-cell UMD (Under Monitor Display).
        {
-         apply_custom_umd_layout(parameters);
-         apply_layout_alarm_configuration(parameters);
+         apply_custom_layouts(parameters);
+         apply_layout_style_configuration(parameters);
       }
 
       // Use the server-compatible direct split-16 channel mapping. Rebuilding
@@ -379,14 +389,6 @@ function get_layouts()
          ppm_layout.ppms_right.cells[0].channels_num = 8;
       }
 
-      // Enable only the PIP styles that should be generated. Disabling unused
-      // styles avoids creating hundreds of unnecessary layout records.
-      // "outside" places UMD/PPM elements around the video; "inside" overlays
-      // them on the video. TALLY variants add tally indication.
-      {
-         for(const [style_id,enable] of Object.entries(layout_configuration.enabled_styles))
-            parameters.pip_configurations[Number(style_id)].enable = enable;
-      }
       // Enable and style the 1920x1080 layout raster.
       {
          apply_raster_configuration(parameters);
@@ -588,32 +590,37 @@ async function run() {
 // -----------------------------------------------------------------------------
 // The editable choices live near the top of the file.
 
-function apply_custom_umd_layout(parameters: ReturnType<typeof generate_layouts_parameters>)
+function apply_custom_layouts(parameters: ReturnType<typeof generate_layouts_parameters>)
 {
-   const configuration = layout_configuration.custom_umd_layout;
-   const layout = clone(parameters.pip_configurations[configuration.based_on]);
+   for(const configuration of layout_configuration.custom_styles)
+   {
+      const layout = clone(parameters.pip_configurations[configuration.based_on]);
 
-   layout.name = configuration.name;
-   layout.video_source.style_border_width = configuration.video_border_width;
-   layout.umd = get_default_md(configuration.cells.length);
-   layout.umd.alignment = configuration.alignment;
-   layout.umd.width = configuration.width;
+      layout.name = configuration.name;
+      layout.video_source.style_border_width = configuration.video_border_width;
+      layout.umd = get_default_md(configuration.cells.length);
+      layout.umd.alignment = configuration.alignment;
+      layout.umd.width = configuration.width;
 
-   configuration.cells.forEach((cell,index) => {
-      layout.umd.cells[index].mode = cell.mode;
-      layout.umd.cells[index].width = cell.width;
-      layout.umd.cells[index].style_border_width = cell.border_width;
-   });
+      configuration.cells.forEach((cell,index) => {
+         layout.umd.cells[index].mode = cell.mode;
+         layout.umd.cells[index].width = cell.width;
+         layout.umd.cells[index].style_border_width = cell.border_width;
+      });
 
-   parameters.pip_configurations[configuration.slot] = layout;
+      parameters.pip_configurations[configuration.slot] = layout;
+   }
 }
 
-function apply_layout_alarm_configuration(parameters: ReturnType<typeof generate_layouts_parameters>)
+function apply_layout_style_configuration(parameters: ReturnType<typeof generate_layouts_parameters>)
 {
-   const configuration = layout_configuration.alarms;
-   const video_source = parameters.pip_configurations[configuration.style].video_source;
-   video_source.alarms_enable = configuration.enable;
-   video_source.alarms_on_video_source_not_assigned_show_logo = configuration.show_logo_when_unassigned;
+   for(const [style_id,configuration] of Object.entries(layout_configuration.styles))
+   {
+      const style = parameters.pip_configurations[Number(style_id)];
+      style.enable = configuration.enable;
+      style.video_source.alarms_enable = configuration.alarms.enable;
+      style.video_source.alarms_on_video_source_not_assigned_show_logo = configuration.alarms.show_logo_when_unassigned;
+   }
 }
 
 function apply_raster_configuration(parameters: ReturnType<typeof generate_layouts_parameters>)
