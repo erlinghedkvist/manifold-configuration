@@ -333,8 +333,8 @@ const hardware_configuration = {
          //   udp_src_port/udp_dst_port: RTP/UDP transport ports
          //   rtp_payload_type: RTP payload type for generated streams
          services_ip_addresses_ranges : [
-            {name : 'RL Generators IP Range',ip_addresses_start : '237.0.0.0',ip_addresses_num : 8192,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
-            {name : 'RL Generators IP Range',ip_addresses_start : '237.1.0.0',ip_addresses_num : 8192,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
+            {name : 'RL Generators IP Range Primary',ip_addresses_start : '237.0.0.0',ip_addresses_num : 8192,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
+            {name : 'RL Generators IP Range Secondary',ip_addresses_start : '237.1.0.0',ip_addresses_num : 8192,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Video Test Patterns IP Range Primary',ip_addresses_start : '237.0.16.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Video Test Patterns IP Range Secondary',ip_addresses_start : '237.1.16.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
             {name : 'Multiviewer Heads IP Range Primary',ip_addresses_start : '237.0.32.0',ip_addresses_num : 1024,inc_mode : 'X_X_1_1',sources_routing_mode : 'sps',udp_src_port : 9000,udp_dst_port : 9000,rtp_payload_type : 96},
